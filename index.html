@@ -77,6 +77,31 @@ h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.5rem, 4vw
   .arrow { display: none; }
 }
 
+body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(14, 9, 6, 0.94); border-top: 1px solid var(--line); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.dock-in { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
+.dock-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.dock-day { font-size: 0.9rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.dock-pct { font-family: var(--display); font-weight: 800; font-size: 1.25rem; color: var(--glow); font-variant-numeric: tabular-nums; }
+.dock-bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.dock-bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, #E9A06B, #FFD43B);
+  box-shadow: 0 0 12px rgba(255, 212, 59, 0.5); transition: width .45s ease; }
+.dock-sub { font-size: 0.8rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock.complete .dock-bar i { background: var(--glow); }
+.dock.complete .dock-sub { color: var(--glow); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 45;
+  width: min(440px, calc(100% - 32px)); background: #24160C; border: 1px solid var(--sand); border-radius: 14px; padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 2px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); animation: pop .3s ease; }
+.toast strong { font-family: var(--display); font-weight: 800; color: var(--glow); font-size: 1.1rem; }
+.toast span { color: var(--text); font-size: 0.92rem; }
+.toast.big { border-color: var(--glow); box-shadow: 0 0 30px rgba(255, 212, 59, 0.35); }
+.toast.big strong { font-size: 1.4rem; }
+@keyframes pop { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.confetti { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.tab.full { box-shadow: inset 0 0 0 2px var(--glow); }
+.tab.full .cnt { color: var(--glow); }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } .dock-bar i { transition: none; } }
 .mine-row { display: flex; flex-direction: column; gap: 4px; }
 .del { align-self: flex-end; background: transparent; border: 0; color: var(--dim); font-size: 0.8rem; font-weight: 400; padding: 2px 6px; text-decoration: underline; }
 .add-form { display: flex; flex-direction: column; gap: 8px; background: var(--card); border: 1px dashed var(--line); border-radius: 12px; padding: 14px; }
@@ -587,7 +612,7 @@ h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.5rem, 4vw
             e.preventDefault();
             if (state[current].readall || !window.__openReader) return;
             var d = current;
-            window.__openReader(function () { state[d].readall = true; saveLocal(); refresh(); push(d); });
+            window.__openReader(function () { state[d].readall = true; saveLocal(); refresh(); push(d); setTimeout(function () { celebrate(d); }, 2700); });
           });
         } else {
           cb.addEventListener("change", function () { toggle(t[0], cb.checked); });
@@ -700,14 +725,92 @@ h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.5rem, 4vw
       var tab = $("tab-" + d), c = count(d); all += c; possible += IDS_BY_DAY[d].length;
       tab.setAttribute("aria-pressed", d === current ? "true" : "false");
       tab.children[2].textContent = c + "/" + IDS_BY_DAY[d].length;
+      tab.classList.toggle("full", c > 0 && c === IDS_BY_DAY[d].length);
     });
     $("week").textContent = all + " of " + possible + " ticks done across the 21 days.";
+    if (typeof updateDock === "function" && document.getElementById("dock-day")) updateDock();
   }
 
   function toggle(id, on) {
     var day = current;
     if (on) state[day][id] = true; else delete state[day][id];
     saveLocal(); refresh(); push(day);
+    if (on) celebrate(day);
+  }
+
+  // ---------- Motivation: dock, toasts, milestones, confetti, streak ----------
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var PRAISE = ["Nice work!", "One step closer to your offer.", "That's how hired engineers work.", "Momentum is building.",
+    "You showed up. That's what wins.", "Keep going, you're on fire.", "Discipline today, offer letter tomorrow.", "Done and dusted!"];
+  function nameOf(id) {
+    var out = null;
+    GROUPS.forEach(function (g) { g[1].forEach(function (t) { if (t[0] === id) out = { name: t[1], when: t[2] }; }); });
+    CUSTOM.forEach(function (t) { if (t.id === id) out = { name: t.name, when: t.time }; });
+    return out || { name: id, when: "" };
+  }
+  function nextUp(day) {
+    var ids = IDS_BY_DAY[day];
+    for (var i = 0; i < ids.length; i++) if (state[day][ids[i]] !== true && ids[i] !== "sleep78") return nameOf(ids[i]);
+    return null;
+  }
+  function streak() {
+    var today = key(new Date()), idx = DAYS.indexOf(today);
+    if (idx < 0) idx = today > DAYS[DAYS.length - 1] ? DAYS.length - 1 : -1;
+    if (idx < 0) return 0;
+    var good = function (d) { var t = IDS_BY_DAY[d].length; return t > 0 && count(d) / t >= 0.8; };
+    var s = 0, i = idx;
+    if (!good(DAYS[i])) i--;
+    for (; i >= 0 && good(DAYS[i]); i--) s++;
+    return s;
+  }
+  var dock = el("div", "dock"), toastEl = el("div", "toast"), toastTimer = null;
+  dock.innerHTML = '<div class="dock-in"><div class="dock-top"><span class="dock-day" id="dock-day"></span>' +
+    '<span class="dock-pct" id="dock-pct">0%</span></div><div class="dock-bar"><i id="dock-fill"></i></div>' +
+    '<div class="dock-sub" id="dock-sub"></div></div>';
+  toastEl.setAttribute("role", "status"); toastEl.setAttribute("aria-live", "polite"); toastEl.hidden = true;
+  document.body.appendChild(toastEl); document.body.appendChild(dock);
+  function updateDock() {
+    var n = count(current), tot = IDS_BY_DAY[current].length, pct = tot ? Math.round(100 * n / tot) : 0, dt = parts(current);
+    $("dock-day").textContent = (current === key(new Date()) ? "Today" : DOW[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()]) + " · " + n + " of " + tot;
+    $("dock-pct").textContent = pct + "%";
+    $("dock-fill").style.width = pct + "%";
+    dock.classList.toggle("complete", n === tot && tot > 0);
+    var s = streak(), nx = nextUp(current);
+    var sub = n === tot && tot > 0 ? "Day complete. You did everything you promised yourself." :
+      (nx ? "Next: " + nx.name + (nx.when ? " · " + nx.when.split(" · ")[0] : "") : "Only tomorrow-morning ticks left.");
+    if (s > 0) sub = s + "-day streak · " + sub;
+    $("dock-sub").textContent = sub;
+  }
+  function toast(title, body, big) {
+    toastEl.textContent = "";
+    toastEl.appendChild(el("strong", null, title));
+    if (body) toastEl.appendChild(el("span", null, body));
+    toastEl.className = "toast" + (big ? " big" : ""); toastEl.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.hidden = true; }, big ? 5200 : 3200);
+  }
+  function celebrate(day) {
+    var n = count(day), tot = IDS_BY_DAY[day].length; if (!tot) return;
+    var pct = n / tot, prev = (n - 1) / tot, left = tot - n, nx = nextUp(day);
+    if (n === tot) { toast("Day complete! 100%", "Every promise kept. This is exactly how offers are earned.", true); confetti(); return; }
+    if (prev < 0.75 && pct >= 0.75) { toast("75% done!", "Only " + left + " left. Finish strong." + (nx ? " Next: " + nx.name + "." : "")); return; }
+    if (prev < 0.5 && pct >= 0.5) { toast("Halfway there!", left + " to go. The second half is where winners are made."); return; }
+    if (n === 1) { toast("Great start!", "First tick of the day. " + (nx ? "Next: " + nx.name + "." : "")); return; }
+    toast(PRAISE[Math.floor(Math.random() * PRAISE.length)], n + " of " + tot + " done · " + left + " to go." + (nx ? " Next: " + nx.name + "." : ""));
+  }
+  function confetti() {
+    if (reduceMotion) return;
+    var cv = document.createElement("canvas"); cv.className = "confetti"; document.body.appendChild(cv);
+    var w = cv.width = innerWidth, h = cv.height = innerHeight, c = cv.getContext("2d"), P = [];
+    var cols = ["#FFD43B", "#E9A06B", "#FF7A3C", "#F6D6B4"];
+    for (var i = 0; i < 220; i++) P.push({ x: w / 2 + (Math.random() - 0.5) * w * 0.3, y: h * 0.75, vx: (Math.random() - 0.5) * 12,
+      vy: -Math.random() * 16 - 6, s: Math.random() * 4 + 2, c: cols[i % 4], r: Math.random() * 6.28 });
+    var t0 = performance.now();
+    (function frame(t) {
+      var el2 = t - t0; c.clearRect(0, 0, w, h);
+      P.forEach(function (p) { p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += 0.1;
+        c.save(); c.translate(p.x, p.y); c.rotate(p.r); c.fillStyle = p.c; c.globalAlpha = Math.max(0, 1 - el2 / 3200); c.fillRect(-p.s, -p.s / 2, p.s * 2, p.s); c.restore(); });
+      if (el2 < 3200) requestAnimationFrame(frame); else cv.remove();
+    })(t0);
   }
 
   function push(day) {
