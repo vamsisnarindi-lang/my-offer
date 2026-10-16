@@ -284,6 +284,47 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .ring-hint::before { content: "↑ "; color: var(--glow); }
 .ring-item.side { opacity: 0.35; }
 
+/* ---- audit fixes ---- */
+body.reading .menu-btn, body.reading .dock, body.reading .toast { display: none !important; }
+.menu-btn.tucked { transform: translateY(-80px); opacity: 0; }
+.menu-btn { transition: transform .3s ease, opacity .3s ease; }
+.row.future { opacity: 0.55; cursor: not-allowed; }
+.future-note { margin: 0; padding: 12px 14px; border-radius: 12px; border: 1px dashed var(--sand); color: var(--sand); font-size: 0.92rem; }
+.dock-top { flex-wrap: wrap; }
+.dock-xp { margin-left: auto; font-size: 0.75rem; color: var(--sand); border: 1px solid var(--line); border-radius: 99px; padding: 2px 9px;
+  white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* ---- vision offer letter ---- */
+.vision-sec { display: flex; flex-direction: column; gap: 16px; }
+.vision-sec .lead { margin: 0; }
+.letter { position: relative; overflow: hidden; border-radius: 6px; padding: 28px 24px 30px; color: #2B1A0C;
+  background: radial-gradient(ellipse at 20% 0%, #FFF8E8 0%, #F6E7C8 60%, #EBD5A8 100%);
+  box-shadow: 0 0 0 1px #C99A55, 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 40px rgba(255, 212, 59, 0.12); font-family: var(--body); }
+.letter::before { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(160, 110, 50, 0.45); border-radius: 3px; pointer-events: none; }
+.letter p { margin: 0 0 12px; position: relative; }
+.l-date { font-size: 0.85rem; color: #7A5A33; }
+.l-hi { font-family: var(--display); font-weight: 600; font-size: 1.15rem; }
+.l-body { font-size: 1.02rem; line-height: 1.6; }
+.l-body strong { font-weight: 600; color: #1E1206; }
+.l-sign { font-family: var(--display); font-weight: 600; margin-top: 18px !important; }
+.l-sign span { font-family: var(--body); font-weight: 400; font-size: 0.85rem; color: #7A5A33; }
+.stamp { position: absolute; top: 18px; right: -34px; transform: rotate(35deg); background: #B5541A; color: #FFF3DD; font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase; padding: 4px 40px; font-weight: 600; }
+.seal { position: absolute; right: 18px; bottom: 16px; width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 35%, #E2604A, #9E2416); box-shadow: 0 3px 8px rgba(0,0,0,0.35), inset 0 0 0 4px rgba(255,255,255,0.12);
+  transform: rotate(-12deg); }
+.seal span { color: #FFE9D6; font-size: 0.55rem; letter-spacing: 0.12em; font-weight: 600; text-align: center; line-height: 1.3; }
+.vision-form label { margin-top: 4px; }
+/* ---- breathing ---- */
+.breath { position: fixed; inset: 0; z-index: 80; background: radial-gradient(ellipse at 50% 40%, #1E1309 0%, var(--night) 70%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; text-align: center; }
+.b-circle { width: 180px; height: 180px; border-radius: 50%; display: grid; place-items: center; color: #241603; font-family: var(--display);
+  font-weight: 800; font-size: 1.3rem; background: radial-gradient(circle at 40% 35%, #FFE58A, #E9A06B 70%);
+  box-shadow: 0 0 60px rgba(255, 212, 59, 0.35); transform: scale(0.6); transition: transform 4s ease-in-out; }
+.b-circle.in { transform: scale(1.15); }
+.b-line { font-family: var(--display); font-weight: 600; font-size: 1.35rem; color: var(--glow); max-width: 22ch; margin: 0; text-wrap: balance; min-height: 3.2em; }
+.b-time { color: var(--dim); margin: 0; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .b-circle { transition: none; } .menu-btn { transition: none; } }
+
 .backup { display: flex; flex-direction: column; gap: 6px; }
 .backup .lead { margin: 0 0 10px; }
 </style>
@@ -296,6 +337,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
     <div class="btns">
       <button class="primary" id="spoke" type="button">I said it aloud</button>
       <button class="ghost" id="next" type="button">Next affirmation</button>
+      <button class="ghost" id="breathe" type="button">1-minute calm</button>
     </div>
     <p class="count" id="count">Read it once, slowly, with feeling.</p>
   </div>
@@ -303,10 +345,37 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 
 <main>
 
+
+  <section class="vision-sec" id="vision">
+    <div>
+      <h2>My offer letter</h2>
+      <p class="lead">Fill in the job you are calling in. Read your letter every morning as if it has already arrived.</p>
+    </div>
+    <article class="letter" id="letter" aria-live="polite">
+      <span class="stamp" aria-hidden="true">Vision</span>
+      <p class="l-date" id="l-date"></p>
+      <p class="l-hi">Dear Vamsi,</p>
+      <p class="l-body" id="l-body"></p>
+      <p class="l-sign">Welcome to the team.<br><span>With gratitude, received in advance</span></p>
+      <div class="seal" aria-hidden="true"><span>OFFER<br>ACCEPTED</span></div>
+    </article>
+    <div class="btns" style="justify-content:flex-start">
+      <button class="primary" id="v-read" type="button">I read my letter today</button>
+      <button class="ghost" id="v-edit" type="button">Edit my letter</button>
+    </div>
+    <form class="add-form vision-form" id="v-form" hidden>
+      <label class="fl" for="v-role">Job title</label><input id="v-role" type="text" maxlength="60" placeholder="e.g. DevOps Engineer">
+      <label class="fl" for="v-co">Company (or the kind of company)</label><input id="v-co" type="text" maxlength="60" placeholder="e.g. a product company I love">
+      <label class="fl" for="v-city">City</label><input id="v-city" type="text" maxlength="40" placeholder="e.g. Hyderabad">
+      <label class="fl" for="v-by">Offer by</label><input id="v-by" type="date">
+      <div class="add-row"><button class="primary" type="submit">Save my letter</button></div>
+    </form>
+    <p class="note-status" id="v-msg"></p>
+  </section>
   <section class="check-sec" id="checklist">
     <div>
       <h2>Today's checklist</h2>
-      <p class="lead">21 days, Sat 17 Oct to Fri 6 Nov. Saturday and Sunday evenings are free. Tap a task when it's done.</p>
+      <p class="lead" id="planLead">21 days, Sat 17 Oct to Fri 6 Nov. Saturday and Sunday evenings are free. Tap a task when it's done.</p>
     </div>
 
 
@@ -552,7 +621,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 </script>
 <script>
 (function () {
-  var START = new Date(2026, 9, 17), N = 21;
+  var START = new Date(2026, 9, 17), N = (function () { var since = Math.floor((new Date() - START) / 86400000); return Math.max(21, Math.ceil((since + 7) / 7) * 7); })();
   function key(dt) { return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
   var DAYS = [];
   for (var i = 0; i < N; i++) DAYS.push(key(new Date(START.getFullYear(), START.getMonth(), START.getDate() + i)));
@@ -704,7 +773,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
           cb.disabled = true; row.classList.add("locked");
           row.addEventListener("click", function (e) {
             e.preventDefault();
-            if (state[current].readall || !window.__openReader) return;
+            if (state[current].readall || !window.__openReader || current > key(new Date())) return;
             var d = current;
             window.__openReader(function () { state[d].readall = true; saveLocal(); refresh(); push(d); setTimeout(function () { celebrate(d); }, 2700); });
           });
@@ -718,6 +787,12 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
     });
     buildMine(host);
     buildLearn(host);
+    if (current > key(new Date())) {
+      host.querySelectorAll(".row").forEach(function (r) { r.classList.add("future"); var i = r.querySelector("input"); if (i) i.disabled = true; });
+      var ta = $("learn-text"); if (ta) ta.disabled = true;
+      var dt = parts(current), nb = el("p", "future-note", "This day hasn't started yet. Its boxes unlock on " + LONG[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()] + ". Focus on today.");
+      host.insertBefore(nb, host.firstChild);
+    }
   }
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -821,7 +896,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
       tab.children[2].textContent = c + "/" + IDS_BY_DAY[d].length;
       tab.classList.toggle("full", c > 0 && c === IDS_BY_DAY[d].length);
     });
-    $("week").textContent = all + " of " + possible + " ticks done across the 21 days.";
+    $("week").textContent = all + " of " + possible + " ticks done across these " + N + " days.";
     if (typeof updateDock === "function" && document.getElementById("dock-day")) updateDock();
   }
 
@@ -859,11 +934,26 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   }
   var dock = el("div", "dock"), toastEl = el("div", "toast"), toastTimer = null;
   dock.innerHTML = '<div class="dock-in"><div class="dock-top"><span class="dock-day" id="dock-day"></span>' +
-    '<span class="dock-pct" id="dock-pct">0%</span></div><div class="dock-bar"><i id="dock-fill"></i></div>' +
+    '<span class="dock-xp" id="dock-xp"></span><span class="dock-pct" id="dock-pct">0%</span></div><div class="dock-bar"><i id="dock-fill"></i></div>' +
     '<div class="dock-sub" id="dock-sub"></div></div>';
   toastEl.setAttribute("role", "status"); toastEl.setAttribute("aria-live", "polite"); toastEl.hidden = true;
   document.body.appendChild(toastEl); document.body.appendChild(dock);
+  var LEVELS = [[0, "Beginner"], [150, "Learner"], [400, "Practitioner"], [800, "Interview-ready"], [1300, "Offer magnet"], [2000, "Hired"]];
+  var lastLevel = null;
+  function xpInfo() {
+    var xp = 0; DAYS.forEach(function (d) { xp += count(d) * 10; if (IDS_BY_DAY[d].length && count(d) === IDS_BY_DAY[d].length) xp += 50; });
+    var lv = 0; LEVELS.forEach(function (L, i) { if (xp >= L[0]) lv = i; });
+    var nxt = LEVELS[lv + 1];
+    return { xp: xp, lv: lv, name: LEVELS[lv][1], need: nxt ? nxt[0] - xp : 0, nextName: nxt ? nxt[1] : null };
+  }
   function updateDock() {
+    var X = xpInfo();
+    $("dock-xp").textContent = "Lv " + (X.lv + 1) + " · " + X.name + " · " + X.xp + " XP";
+    $("dock-xp").title = X.nextName ? X.need + " XP to " + X.nextName : "Top level reached";
+    if (lastLevel !== null && X.lv > lastLevel) {
+      setTimeout(function () { toast("Level up! " + X.name, "You reached level " + (X.lv + 1) + ". " + (X.nextName ? X.need + " XP to " + X.nextName + "." : "You made it to the top."), true); confetti(); }, 3400);
+    }
+    lastLevel = X.lv;
     var n = count(current), tot = IDS_BY_DAY[current].length, pct = tot ? Math.round(100 * n / tot) : 0, dt = parts(current);
     $("dock-day").textContent = (current === key(new Date()) ? "Today" : DOW[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()]) + " · " + n + " of " + tot;
     $("dock-pct").textContent = pct + "%";
@@ -925,6 +1015,8 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
     })();
   }
 
+  (function () { var a = parts(DAYS[0]), z = parts(DAYS[DAYS.length - 1]), pl = $("planLead");
+    if (pl) pl.textContent = N + " days, " + DOW[a.getDay()] + " " + a.getDate() + " " + MON[a.getMonth()] + " to " + DOW[z.getDay()] + " " + z.getDate() + " " + MON[z.getMonth()] + ". Saturday and Sunday evenings are free. Tap a task when it's done."; })();
   loadLocal(); buildTabs(); buildList(); refresh();
 
   var use = window.claude && window.claude.use ? window.claude.use("db") : Promise.resolve(null);
@@ -980,6 +1072,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
     document.querySelectorAll(".swap .start").forEach(function (el) { add(el.textContent); });
     document.querySelectorAll(".aff-card li").forEach(function (el) { add(el.textContent); });
     document.querySelectorAll(".ritual strong").forEach(function (el) { add(el.textContent); });
+    var vl = document.querySelector(".vision-line"); if (vl) add("My offer letter has arrived: " + vl.textContent);
     add(document.querySelector(".closing blockquote").textContent);
     return out;
   }
@@ -993,11 +1086,11 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   }
   function open(cb) {
     lines = collect(); i = 0; onDone = cb || null;
-    ov.hidden = false; document.body.style.overflow = "hidden";
+    ov.hidden = false; document.body.style.overflow = "hidden"; document.body.classList.add("reading");
     hint.textContent = "Read each line slowly, out loud if you can.";
     show();
   }
-  function close() { clearTimeout(timer); ov.hidden = true; document.body.style.overflow = ""; }
+  function close() { clearTimeout(timer); ov.hidden = true; document.body.style.overflow = ""; document.body.classList.remove("reading"); }
   next.addEventListener("click", function () {
     if (i < lines.length - 1) { i++; show(); return; }
     rbar.style.width = "100%";
@@ -1011,8 +1104,8 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !ov.hidden) close(); });
   window.__openReader = open;
   document.getElementById("startRead").addEventListener("click", function () {
-    var row = document.getElementById("cb-readall");
-    if (row) row.closest("label").click(); else open(null);
+    var cb = document.getElementById("cb-readall"), lab = cb && cb.closest("label");
+    if (cb && !cb.checked && lab && !lab.classList.contains("future")) lab.click(); else open(null);
   });
 })();
 </script>
@@ -1179,10 +1272,103 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
 })();
 </script>
 
+<div class="breath" id="breath" hidden role="dialog" aria-modal="true" aria-label="One minute of calm breathing">
+  <div class="b-circle" id="b-circle"><span id="b-word">Ready</span></div>
+  <p class="b-line" id="b-line">Sit tall. Relax your shoulders.</p>
+  <p class="b-time" id="b-time">60</p>
+  <button class="ghost" id="b-stop" type="button">Stop</button>
+</div>
 
 <script>
 (function () {
-  var KEYS = ["daily-checklist-21d", "daily-checklist-custom", "daily-checklist-notes", "offer-coming-spoken"];
+  // menu tucks away while scrolling down, comes back when scrolling up
+  var mb = document.getElementById("menuBtn"), lastY = window.scrollY;
+  window.addEventListener("scroll", function () {
+    var y = window.scrollY, dr = document.getElementById("drawer");
+    if (dr && dr.classList.contains("open")) return;
+    mb.classList.toggle("tucked", y > lastY && y > 120); lastY = y;
+  }, { passive: true });
+
+  // ---- 1-minute calm ----
+  var B = document.getElementById("breath"), circ = document.getElementById("b-circle"), word = document.getElementById("b-word"),
+      line = document.getElementById("b-line"), tm = document.getElementById("b-time"), timers = [];
+  var SAY = ["I am calm and ready.", "I am prepared for my interview.", "My offer is on its way.", "I trust myself.", "I am exactly where I need to be."];
+  function stopB() { timers.forEach(clearTimeout); timers = []; B.hidden = true; document.body.classList.remove("reading"); circ.classList.remove("in"); }
+  function startB() {
+    B.hidden = false; document.body.classList.add("reading"); var t0 = Date.now(), cycle = 0;
+    function phase() {
+      var left = 60 - Math.floor((Date.now() - t0) / 1000);
+      if (left <= 0) { word.textContent = "Done"; line.textContent = "Calm, focused and ready. Go and do your next task."; tm.textContent = ""; circ.classList.remove("in");
+        timers.push(setTimeout(stopB, 3500)); return; }
+      var k = cycle % 3;
+      if (k === 0) { word.textContent = "Breathe in"; circ.classList.add("in"); line.textContent = SAY[Math.floor(cycle / 3) % SAY.length]; }
+      if (k === 1) { word.textContent = "Hold"; }
+      if (k === 2) { word.textContent = "Breathe out"; circ.classList.remove("in"); }
+      cycle++; timers.push(setTimeout(phase, 4000));
+    }
+    (function tick() { var l = 60 - Math.floor((Date.now() - t0) / 1000); if (l >= 0 && !B.hidden) { tm.textContent = l + "s"; timers.push(setTimeout(tick, 500)); } })();
+    phase();
+  }
+  document.getElementById("breathe").addEventListener("click", startB);
+  document.getElementById("b-stop").addEventListener("click", stopB);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !B.hidden) stopB(); });
+
+  // ---- vision offer letter ----
+  var KEY = "offer-vision", V = { role: "", co: "", city: "", by: "" }, db = null, msg = document.getElementById("v-msg"), form = document.getElementById("v-form");
+  function clean(o) { o = o || {}; return { role: String(o.role || "").slice(0, 60), co: String(o.co || "").slice(0, 60), city: String(o.city || "").slice(0, 40), by: /^\d{4}-\d{2}-\d{2}$/.test(o.by || "") ? o.by : "" }; }
+  try { V = clean(JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+  function fmt(d) { if (!d) return ""; var p = d.split("-"); var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+    return dt.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }); }
+  function render() {
+    var role = V.role || "Software Engineer", co = V.co || "a company where I can grow", city = V.city ? " in " + V.city : "";
+    document.getElementById("l-date").textContent = V.by ? "Offer date: " + fmt(V.by) : "Offer date: very soon";
+    var b = document.getElementById("l-body"); b.textContent = "";
+    b.appendChild(document.createTextNode("We are delighted to offer you the role of "));
+    var r = document.createElement("strong"); r.textContent = role; b.appendChild(r);
+    b.appendChild(document.createTextNode(" at "));
+    var c = document.createElement("strong"); c.textContent = co; b.appendChild(c);
+    b.appendChild(document.createTextNode(city + ". Your skills in Java, SQL, Python, DevOps, Cloud and AI impressed everyone you spoke with. We can't wait for you to join us."));
+    b.className = "l-body vision-line";
+    ["v-role", "v-co", "v-city", "v-by"].forEach(function (id, i) { document.getElementById(id).value = [V.role, V.co, V.city, V.by][i]; });
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(V)); } catch (e) {}
+    if (db) db.doc("settings/vision").set(V).then(function () { msg.textContent = "Saved."; }, function () { msg.textContent = "Saved on this device."; });
+    else msg.textContent = "Saved.";
+  }
+  document.getElementById("v-edit").addEventListener("click", function () { form.hidden = !form.hidden; if (!form.hidden) document.getElementById("v-role").focus(); });
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    V = clean({ role: document.getElementById("v-role").value.trim(), co: document.getElementById("v-co").value.trim(),
+                city: document.getElementById("v-city").value.trim(), by: document.getElementById("v-by").value });
+    render(); save(); form.hidden = true;
+  });
+  var RKEY = "offer-vision-read";
+  function today() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function readCount() { try { return JSON.parse(localStorage.getItem(RKEY) || "{}") || {}; } catch (e) { return {}; } }
+  function showRead() { var r = readCount(), n = Object.keys(r).length; if (n) msg.textContent = "You have read your offer letter on " + n + (n === 1 ? " day" : " days") + "." + (r[today()] ? " Done for today." : ""); }
+  document.getElementById("v-read").addEventListener("click", function () {
+    var r = readCount(); r[today()] = 1; try { localStorage.setItem(RKEY, JSON.stringify(r)); } catch (e) {}
+    var L = document.getElementById("letter"); L.animate && L.animate([{ transform: "scale(1)" }, { transform: "scale(1.02)" }, { transform: "scale(1)" }], { duration: 500 });
+    showRead();
+  });
+  render(); showRead();
+  var use = window.claude && window.claude.use ? window.claude.use("db") : Promise.resolve(null);
+  use.then(function (ns) {
+    if (!ns) return; db = ns;
+    db.doc("settings/vision").onSnapshot(function (doc) {
+      if (!doc.exists) { if (V.role || V.co) db.doc("settings/vision").set(V).catch(function () {}); return; }
+      var n = clean(doc.data()); if (JSON.stringify(n) === JSON.stringify(V)) return;
+      if (!form.hidden) return; V = n; try { localStorage.setItem(KEY, JSON.stringify(V)); } catch (e) {} render();
+    }, function () {});
+  }, function () {});
+})();
+</script>
+
+
+<script>
+(function () {
+  var KEYS = ["daily-checklist-21d", "daily-checklist-custom", "daily-checklist-notes", "offer-coming-spoken", "offer-vision", "offer-vision-read"];
   var msg = document.getElementById("bk-msg");
   document.getElementById("bk-save").addEventListener("click", function () {
     var data = { app: "my-offer-is-coming", saved: new Date().toISOString(), items: {} };
