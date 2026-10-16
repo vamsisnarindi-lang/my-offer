@@ -191,7 +191,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .check-sec .lead { margin: 0; }
 
 /* ---- swipeable slides ---- */
-.slider { display: flex !important; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+.slider { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px; overscroll-behavior-x: contain; }
 .slider::-webkit-scrollbar { display: none; }
 .slider > * { flex: 0 0 86%; scroll-snap-align: center; }
@@ -209,6 +209,30 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .dots i.on { width: 22px; background: var(--glow); box-shadow: 0 0 8px rgba(255, 212, 59, 0.5); }
 .slide-count { font-size: 0.8rem; color: var(--dim); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .slider { scroll-behavior: auto; } .dots i { transition: none; } }
+
+/* ---- flip cards for thought swaps ---- */
+.swap .flip { all: unset; box-sizing: border-box; flex: 0 0 86%; scroll-snap-align: center; position: relative; min-height: 230px;
+  perspective: 1000px; cursor: pointer; display: block; }
+@media (min-width: 700px) { .swap .flip { flex-basis: 70%; } }
+.flip .face { position: absolute; inset: 0; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: center;
+  gap: 12px; text-align: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.flip .front { background: repeating-linear-gradient(135deg, #140D09 0 12px, #120B07 12px 24px); border: 1px solid var(--line); }
+.flip .back { background: radial-gradient(ellipse at 50% 30%, #3A230E 0%, #1A100A 75%); border: 1px solid var(--glow);
+  box-shadow: 0 0 26px rgba(255, 212, 59, 0.22); transform: rotateY(180deg); }
+.flip.flipped .front { transform: rotateY(-180deg); }
+.flip.flipped .back { transform: rotateY(0deg); }
+.flip .lbl { font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: var(--dim); }
+.flip .back .lbl { color: var(--sand); }
+.flip .stop { font-family: var(--display); font-weight: 600; font-size: 1.45rem; line-height: 1.25; color: var(--dim);
+  text-decoration: line-through; text-decoration-color: rgba(255, 120, 60, 0.75); text-decoration-thickness: 2px; }
+.flip .start { font-family: var(--display); font-weight: 800; font-size: 1.5rem; line-height: 1.25; color: var(--glow);
+  text-shadow: 0 0 18px rgba(255, 212, 59, 0.35); text-wrap: balance; }
+.flip .hint { font-size: 0.82rem; color: var(--dim); }
+.flip:focus-visible .face { outline: 3px solid var(--sand); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .flip .face { transition: opacity .2s ease; transform: none !important; }
+  .flip .back { opacity: 0; } .flip.flipped .back { opacity: 1; } .flip.flipped .front { opacity: 0; }
+}
 
 .backup { display: flex; flex-direction: column; gap: 6px; }
 .backup .lead { margin: 0 0 10px; }
@@ -269,19 +293,19 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 
   <section>
     <h2>Stop saying, start saying</h2>
-    <p class="lead">When one of these slips out, cancel it and say the line on the right.</p>
-    <div class="swap">
-      <div class="pair"><span class="stop">I'm jobless.</span><span class="arrow" aria-hidden="true">→</span><span class="start">I'm between roles and preparing for the right one.</span></div>
-      <div class="pair"><span class="stop">I'm too late to switch.</span><span class="arrow" aria-hidden="true">→</span><span class="start">My years of experience are my edge.</span></div>
-      <div class="pair"><span class="stop">I'll never clear the coding round.</span><span class="arrow" aria-hidden="true">→</span><span class="start">My SQL and Python get sharper every day.</span></div>
-      <div class="pair"><span class="stop">Nobody replies to my applications.</span><span class="arrow" aria-hidden="true">→</span><span class="start">The right recruiter is about to find my profile.</span></div>
-      <div class="pair"><span class="stop">I got rejected again.</span><span class="arrow" aria-hidden="true">→</span><span class="start">Every no brings me closer to my yes.</span></div>
-      <div class="pair"><span class="stop">I'm not good enough.</span><span class="arrow" aria-hidden="true">→</span><span class="start">I am learning fast, and I am enough.</span></div>
-      <div class="pair"><span class="stop">Everyone else is ahead of me.</span><span class="arrow" aria-hidden="true">→</span><span class="start">I am on my own path, and it is leading somewhere great.</span></div>
-      <div class="pair"><span class="stop">I'm wasting my days.</span><span class="arrow" aria-hidden="true">→</span><span class="start">Every study hour is an investment in my future.</span></div>
-      <div class="pair"><span class="stop">What if I fail the interview?</span><span class="arrow" aria-hidden="true">→</span><span class="start">I am prepared, and I will show them my best.</span></div>
-      <div class="pair"><span class="stop">I can't afford anything right now.</span><span class="arrow" aria-hidden="true">→</span><span class="start">Money is coming to me through my new job.</span></div>
-      <div class="pair"><span class="stop">It's taking too long.</span><span class="arrow" aria-hidden="true">→</span><span class="start">The right job is worth the wait, and it is close.</span></div>
+    <p class="lead">Swipe through the thoughts that slip out. Tap a card to cancel it and flip to the line you say instead.</p>
+    <div class="swap slider" aria-label="Thought swaps, swipe to see more">
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">I'm jobless.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">I'm between roles and preparing for the right one.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">I'm too late to switch.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">My years of experience are my edge.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">I'll never clear the coding round.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">My SQL and Python get sharper every day.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">Nobody replies to my applications.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">The right recruiter is about to find my profile.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">I got rejected again.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">Every no brings me closer to my yes.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">I'm not good enough.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">I am learning fast, and I am enough.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">Everyone else is ahead of me.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">I am on my own path, and it is leading somewhere great.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">I'm wasting my days.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">Every study hour is an investment in my future.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">What if I fail the interview?</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">I am prepared, and I will show them my best.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">I can't afford anything right now.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">Money is coming to me through my new job.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
+      <button class="flip" type="button" aria-pressed="false"><span class="face front"><span class="lbl">Stop saying</span><span class="stop">It's taking too long.</span><span class="hint">Tap to cancel it</span></span><span class="face back"><span class="lbl">Cancel that. Start saying</span><span class="start">The right job is worth the wait, and it is close.</span><span class="hint">Say it out loud · tap to flip back</span></span></button>
     </div>
   </section>
 
@@ -978,6 +1002,12 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
     paint();
   });
 })();
+</script>
+
+<script>
+document.querySelectorAll(".swap .flip").forEach(function (b) {
+  b.addEventListener("click", function () { var on = b.classList.toggle("flipped"); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+});
 </script>
 
 
