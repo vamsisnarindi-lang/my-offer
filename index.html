@@ -265,6 +265,20 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .dnote { color: var(--dim); font-size: 0.82rem; margin: 14px 2px 0; min-height: 1.2em; }
 @media (prefers-reduced-motion: reduce) { .drawer, .scrim, .menu-btn i { transition: none; } }
 
+/* ---- 3D circular carousel ---- */
+.ring-stage { position: relative; perspective: 1100px; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.ring-stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 6px; height: 18px; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, rgba(233, 160, 107, 0.18), transparent 70%); }
+.ring-track { display: block !important; position: absolute !important; inset: 0; margin: 0 !important; padding: 0 !important; list-style: none;
+  transform-style: preserve-3d; transition: transform .75s cubic-bezier(.2,.7,.2,1); }
+.ring-item { position: absolute !important; top: 18px; left: 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  transition: opacity .6s ease, filter .6s ease, box-shadow .6s ease; }
+.ring-item.front { box-shadow: 0 0 0 1px var(--sand), 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 28px rgba(233, 160, 107, 0.15); }
+.ring-item.side { opacity: 0.42; filter: brightness(0.7); pointer-events: none; }
+.ring-item.back { opacity: 0; pointer-events: none; }
+.practices.ring-track li { min-height: 0; }
+@media (prefers-reduced-motion: reduce) { .ring-track, .ring-item { transition: none; } }
+
 .backup { display: flex; flex-direction: column; gap: 6px; }
 .backup .lead { margin: 0 0 10px; }
 </style>
@@ -309,7 +323,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   <section>
     <h2>Nine ways to speak your offer into being</h2>
     <p class="lead">The practices from the post you saved, turned towards the one thing you want right now: a job offer.</p>
-    <ol class="practices slider" aria-label="Nine practices, swipe to see more">
+    <ol class="practices ring" aria-label="Nine practices, swipe to turn the wheel">
       <li><span class="n">01</span><h3>Speak in present tense</h3><p>Not "I will get a job." Say <span class="say">"I am a working engineer."</span></p></li>
       <li><span class="n">02</span><h3>Replace negatives</h3><p>Drop "nobody is hiring." Say <span class="say">"The right company is hiring me."</span></p></li>
       <li><span class="n">03</span><h3>Thank before you receive</h3><p>Every night: <span class="say">"Thank you for my offer letter."</span></p></li>
@@ -343,7 +357,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   <section>
     <h2>Affirmations for every part of you</h2>
     <p class="lead">Pick the card that fits your mood today and read it aloud, line by line.</p>
-    <div class="aff-grid slider" aria-label="Affirmation cards, swipe to see more">
+    <div class="aff-grid ring" aria-label="Affirmation cards, swipe to turn the wheel">
       <article class="aff-card"><h3>Confidence</h3><ul>
         <li>I believe in myself completely.</li><li>I speak with power and clarity.</li><li>I deserve the success I am creating.</li><li>My experience makes me stand out.</li></ul></article>
       <article class="aff-card"><h3>Interviews</h3><ul>
@@ -1020,10 +1034,10 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
       idx = current();
       Array.prototype.forEach.call(dots.children, function (d, i) { d.classList.toggle("on", i === idx); });
       cnt.textContent = (idx + 1) + " / " + items.length;
-      prev.disabled = idx === 0; next.disabled = idx === items.length - 1;
+      
     }
     function go(i) {
-      i = Math.max(0, Math.min(items.length - 1, i)); var it = items[i];
+      i = (i + items.length) % items.length; var it = items[i];
       sl.scrollTo({ left: it.offsetLeft - sl.offsetLeft - (sl.clientWidth - it.offsetWidth) / 2 });
     }
     prev.addEventListener("click", function () { go(idx - 1); });
@@ -1089,6 +1103,67 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
   btn.addEventListener("click", function () { setOpen(!dr.classList.contains("open")); });
   sc.addEventListener("click", function () { setOpen(false); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && dr.classList.contains("open")) { setOpen(false); btn.focus(); } });
+})();
+</script>
+
+<script>
+(function () {
+  document.querySelectorAll(".ring").forEach(function (track) {
+    var items = Array.prototype.slice.call(track.children), n = items.length; if (n < 3) return;
+    var stage = document.createElement("div"); stage.className = "ring-stage";
+    track.parentNode.insertBefore(stage, track); stage.appendChild(track);
+    track.classList.add("ring-track");
+    items.forEach(function (it) { it.classList.add("ring-item"); });
+    var nav = document.createElement("div"); nav.className = "slide-nav";
+    var prev = document.createElement("button"); prev.type = "button"; prev.textContent = "‹"; prev.setAttribute("aria-label", "Turn to previous card");
+    var next = document.createElement("button"); next.type = "button"; next.textContent = "›"; next.setAttribute("aria-label", "Turn to next card");
+    var dots = document.createElement("div"); dots.className = "dots"; dots.setAttribute("aria-hidden", "true");
+    items.forEach(function () { dots.appendChild(document.createElement("i")); });
+    var cnt = document.createElement("span"); cnt.className = "slide-count";
+    nav.appendChild(prev); nav.appendChild(dots); nav.appendChild(cnt); nav.appendChild(next);
+    stage.parentNode.insertBefore(nav, stage.nextSibling);
+    var step = 360 / n, turn = 0, radius = 0;
+    function layout() {
+      var w = Math.min(stage.clientWidth * 0.78, 420);
+      radius = Math.round((w / 2) / Math.tan(Math.PI / n)) + 24;
+      var maxH = 0;
+      items.forEach(function (it, i) {
+        it.style.width = w + "px"; it.style.marginLeft = (-w / 2) + "px";
+        it.style.transform = "rotateY(" + (i * step) + "deg) translateZ(" + radius + "px)";
+        maxH = Math.max(maxH, it.offsetHeight);
+      });
+      stage.style.height = (maxH + 44) + "px";
+      spin();
+    }
+    function idx() { return ((turn % n) + n) % n; }
+    function spin() {
+      track.style.transform = "translateZ(" + (-radius) + "px) rotateY(" + (-turn * step) + "deg)";
+      var k = idx();
+      items.forEach(function (it, i) {
+        var d = Math.min((i - k + n) % n, (k - i + n) % n);
+        it.classList.toggle("front", d === 0); it.classList.toggle("side", d === 1); it.classList.toggle("back", d > 1);
+        it.setAttribute("aria-hidden", d === 0 ? "false" : "true");
+      });
+      Array.prototype.forEach.call(dots.children, function (dd, i) { dd.classList.toggle("on", i === k); });
+      cnt.textContent = (k + 1) + " / " + n;
+    }
+    function go(delta) { turn += delta; spin(); }
+    prev.addEventListener("click", function () { go(-1); });
+    next.addEventListener("click", function () { go(1); });
+    var x0 = null, y0 = null;
+    stage.addEventListener("pointerdown", function (e) { x0 = e.clientX; y0 = e.clientY; });
+    stage.addEventListener("pointerup", function (e) {
+      if (x0 === null) return; var dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+      if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
+    });
+    stage.addEventListener("pointercancel", function () { x0 = null; });
+    stage.tabIndex = 0;
+    stage.addEventListener("keydown", function (e) { if (e.key === "ArrowRight") go(1); if (e.key === "ArrowLeft") go(-1); });
+    layout();
+    window.addEventListener("resize", layout);
+    window.addEventListener("load", layout);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+  });
 })();
 </script>
 
