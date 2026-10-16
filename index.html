@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>My Offer Is Coming</title>
+<meta name="theme-color" content="#0B0806">
+<meta name="description" content="Daily affirmations, checklist and learning log for cracking my next job.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Offer">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Outfit:wght@300;400;600&display=swap">
+<style>
+/* Layout: an ember-lit hero where sand settles into a new pattern for each affirmation, then the 21-day tick-off checklist, then the practices, reframes and daily ritual. Deliberately single-theme (dark), like the post it comes from. */
+:root {
+  --night: #0B0806; --ember-deep: #1A100A; --card: #160E09; --line: #3A2416;
+  --sand: #E9A06B; --glow: #FFD43B; --text: #F3E6DA; --dim: #B39C89;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Outfit", "Segoe UI", system-ui, sans-serif;
+
+  /* checklist tokens, mapped onto the ember palette */
+  --bg: var(--night); --surface: var(--card); --fg: var(--text); --muted: var(--dim);
+  --accent: #F0B060; --accent-fg: #241603; --done-bg: #2A1A0E; --warn: #FF8A65; --free: #1C130C; --wkend: #20160D;
+  --c-routine: #F2C14E; --c-learning: #7FB0F0; --c-fitness: #FF9A5C; --c-personal: #C3A3F0; --c-food: #8BD49C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--night); color: var(--text); }
+body { font-family: var(--body); font-weight: 300; font-size: 17px; line-height: 1.55; margin: 0; }
+.hero { position: relative; min-height: 560px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 38%, #2A160B 0%, var(--night) 62%); }
+#sand { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero-inner { position: relative; z-index: 1; width: 100%; max-width: 760px; padding-inline: 20px; padding-block: 0 44px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--sand); font-weight: 600; margin: 0; }
+#aff { font-family: var(--display); font-weight: 800; font-size: clamp(1.7rem, 5.2vw, 2.9rem); line-height: 1.15; margin: 0; color: var(--glow);
+  text-shadow: 0 0 22px rgba(255, 212, 59, 0.35); text-wrap: balance; min-height: 2.4em; transition: opacity .5s ease; }
+#aff.fade { opacity: 0; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+button { font: inherit; font-weight: 600; font-size: 0.95rem; cursor: pointer; border-radius: 999px; padding: 10px 20px; }
+.primary { background: var(--glow); color: #241603; border: 1px solid var(--glow); }
+.ghost { background: rgba(11, 8, 6, 0.55); color: var(--text); border: 1px solid var(--line); }
+button:focus-visible { outline: 3px solid var(--sand); outline-offset: 3px; }
+.count { font-size: 0.9rem; color: var(--dim); margin: 0; font-variant-numeric: tabular-nums; }
+
+main { max-width: 760px; margin: 0 auto; padding-inline: 20px; padding-block: 56px 72px; display: flex; flex-direction: column; gap: 64px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; margin: 0 0 6px; color: var(--text); text-wrap: balance; }
+.lead { color: var(--dim); margin: 0 0 24px; max-width: 60ch; }
+
+.practices { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.practices li { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.practices .n { font-family: var(--display); font-weight: 800; color: var(--sand); font-size: 0.95rem; }
+.practices h3 { font-family: var(--display); font-weight: 600; font-size: 1.15rem; margin: 0; line-height: 1.25; }
+.practices p { margin: 0; color: var(--dim); font-size: 0.95rem; }
+.say { color: var(--glow); font-weight: 400; }
+
+.swap { display: flex; flex-direction: column; gap: 10px; }
+.pair { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.pair:last-child { border-bottom: 0; }
+.stop { color: var(--dim); text-decoration: line-through; text-decoration-color: rgba(233, 160, 107, 0.6); }
+.arrow { color: var(--sand); font-size: 1.2rem; }
+.start { color: var(--glow); font-weight: 400; }
+@media (max-width: 560px) {
+  .pair { grid-template-columns: 1fr; gap: 4px; }
+  .arrow { display: none; }
+}
+
+.mine-row { display: flex; flex-direction: column; gap: 4px; }
+.del { align-self: flex-end; background: transparent; border: 0; color: var(--dim); font-size: 0.8rem; font-weight: 400; padding: 2px 6px; text-decoration: underline; }
+.add-form { display: flex; flex-direction: column; gap: 8px; background: var(--card); border: 1px dashed var(--line); border-radius: 12px; padding: 14px; }
+.add-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.add-row > * { flex: 1 1 140px; min-width: 0; }
+.add-row button { flex: 0 0 auto; }
+.fl { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sand); font-weight: 600; margin: 0; }
+.add-form input, .add-form select, .learn textarea { font: inherit; font-size: 16px; color: var(--text); background: var(--night); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; width: 100%; }
+.learn textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+.add-form input:focus-visible, .add-form select:focus-visible, .learn textarea:focus-visible { outline: 2px solid var(--sand); outline-offset: 1px; }
+.note-status { margin: 0; font-size: 0.82rem; color: var(--dim); min-height: 1.2em; }
+.learn-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.learn-item { border-left: 2px solid var(--glow); padding: 2px 0 2px 14px; }
+.learn-item .ld { font-size: 0.8rem; color: var(--sand); font-weight: 600; }
+.learn-item p { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.row.locked input:disabled { opacity: 1; cursor: pointer; }
+.row.locked:not(.done) { border-color: var(--sand); box-shadow: 0 0 0 1px rgba(233, 160, 107, 0.25); }
+.reader { position: fixed; inset: 0; z-index: 50; background: radial-gradient(ellipse at 50% 40%, #241309 0%, var(--night) 70%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom, 0px)); }
+.reader .rp { font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sand); font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; }
+.reader .rl { font-family: var(--display); font-weight: 800; font-size: clamp(1.6rem, 6vw, 2.6rem); line-height: 1.2; color: var(--glow);
+  text-shadow: 0 0 22px rgba(255, 212, 59, 0.35); max-width: 24ch; margin: 0; text-wrap: balance; }
+.reader .rbar { width: min(420px, 100%); height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.reader .rbar i { display: block; height: 100%; width: 0; background: var(--glow); }
+.reader .rhint { color: var(--dim); font-size: 0.9rem; margin: 0; }
+.reader button:disabled { opacity: 0.45; cursor: default; }
+.aff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.aff-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+.aff-card h3 { font-family: var(--display); font-weight: 600; font-size: 1.1rem; color: var(--sand); margin: 0 0 10px; }
+.aff-card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.aff-card li { color: var(--text); padding-left: 16px; position: relative; }
+.aff-card li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--glow); box-shadow: 0 0 8px rgba(255, 212, 59, 0.6); }
+.ritual { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.slot { border-left: 2px solid var(--sand); padding: 4px 0 4px 16px; display: flex; flex-direction: column; gap: 4px; }
+.slot .t { font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sand); font-weight: 600; }
+.slot p { margin: 0; color: var(--dim); }
+.slot strong { color: var(--text); font-weight: 600; }
+
+.closing { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.closing blockquote { font-family: var(--display); font-weight: 800; font-size: clamp(1.5rem, 4.6vw, 2.3rem); line-height: 1.2; color: var(--glow); margin: 0;
+  text-shadow: 0 0 20px rgba(255, 212, 59, 0.28); text-wrap: balance; max-width: 22ch; }
+.closing p { color: var(--dim); margin: 0; }
+@media (prefers-reduced-motion: reduce) { #aff { transition: none; } }
+
+/* ---- checklist ---- */
+.cal { display: flex; flex-direction: column; gap: 6px; }
+.week-label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-top: 4px; }
+.tabs { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.tab { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 9px;
+  padding: 6px 1px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 0; }
+.tab.we { background: var(--wkend); }
+.tab .dow { font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.tab .num { font-family: var(--display); font-weight: 700; font-size: 1.1rem; line-height: 1.15; }
+.tab .cnt { font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.tab[aria-pressed="true"] .dow, .tab[aria-pressed="true"] .cnt { color: var(--accent-fg); }
+.tab:focus-visible, .row input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.progress { display: flex; flex-direction: column; gap: 8px; }
+.progress-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.score { font-family: var(--display); font-weight: 700; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.score small { font-family: var(--body); font-weight: 400; font-size: 0.95rem; color: var(--muted); }
+.status { font-size: 0.85rem; color: var(--muted); }
+.status.bad { color: var(--warn); }
+.bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .25s ease; }
+@media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
+
+.group { display: flex; flex-direction: column; gap: 6px; }
+.group h2 { font-family: var(--body); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 2px; font-weight: 700; }
+.row { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 11px 14px; cursor: pointer; min-width: 0; }
+.row input { flex: none; width: 24px; height: 24px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.row .txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.row .name { font-weight: 700; }
+.row .meta { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.row.done { background: var(--done-bg); border-color: transparent; }
+.row.done .name { text-decoration: line-through; text-decoration-thickness: 1.5px; color: var(--muted); }
+.free { background: var(--free); border-radius: 10px; padding: 14px; color: var(--muted); }
+.free strong { color: var(--fg); display: block; }
+.foot { color: var(--muted); font-size: 0.85rem; margin: 0; }
+
+.check-sec { display: flex; flex-direction: column; gap: 20px; }
+.check-sec .lead { margin: 0; }
+
+.backup { display: flex; flex-direction: column; gap: 6px; }
+.backup .lead { margin: 0 0 10px; }
+</style>
+
+<section class="hero" aria-label="Today's affirmation">
+  <canvas id="sand" aria-hidden="true"></canvas>
+  <div class="hero-inner">
+    <p class="eyebrow">Say it out loud</p>
+    <p id="aff" aria-live="polite">I am the candidate they have been looking for.</p>
+    <div class="btns">
+      <button class="primary" id="spoke" type="button">I said it aloud</button>
+      <button class="ghost" id="next" type="button">Next affirmation</button>
+    </div>
+    <p class="count" id="count">Read it once, slowly, with feeling.</p>
+  </div>
+</section>
+
+<main>
+
+  <section class="check-sec" id="checklist">
+    <div>
+      <h2>Today's checklist</h2>
+      <p class="lead">21 days, Sat 17 Oct to Fri 6 Nov. Saturday and Sunday evenings are free. Tap a task when it's done.</p>
+    </div>
+
+
+  <div class="cal" id="cal" role="group" aria-label="Choose a day"></div>
+
+  <section class="progress" aria-live="polite">
+    <div class="progress-top">
+      <div class="score"><span id="score">0</span> <small>of <span id="total">21</span> done · <span id="dayname"></span></small></div>
+      <div class="status" id="status">Saved on this phone</div>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+  </section>
+
+  <div id="list" style="display:flex;flex-direction:column;gap:18px"></div>
+
+  <p class="foot" id="week"></p>
+  <p class="foot">Badminton and DevOps swap hours on days the class runs 11–12. Tick "Slept 7–8 hours" the next morning. Badminton, gym, ABC juice and morning plant watering are off until 22 Oct and start again on Fri 23 Oct.</p>
+  </section>
+  <section>
+    <h2>Nine ways to speak your offer into being</h2>
+    <p class="lead">The practices from the post you saved, turned towards the one thing you want right now: a job offer.</p>
+    <ol class="practices">
+      <li><span class="n">01</span><h3>Speak in present tense</h3><p>Not "I will get a job." Say <span class="say">"I am a working engineer."</span></p></li>
+      <li><span class="n">02</span><h3>Replace negatives</h3><p>Drop "nobody is hiring." Say <span class="say">"The right company is hiring me."</span></p></li>
+      <li><span class="n">03</span><h3>Thank before you receive</h3><p>Every night: <span class="say">"Thank you for my offer letter."</span></p></li>
+      <li><span class="n">04</span><h3>Use power words</h3><p>Hired. Selected. Confident. Prepared. Grateful. Use them in how you talk about yourself.</p></li>
+      <li><span class="n">05</span><h3>Affirm aloud daily</h3><p>Your voice makes it real. Say three affirmations out loud each morning.</p></li>
+      <li><span class="n">06</span><h3>Cancel and replace</h3><p>Catch yourself saying "I'm stuck"? Say <span class="say">"Cancel that. I am moving forward."</span></p></li>
+      <li><span class="n">07</span><h3>Speak as if you're heard</h3><p>Talk about your future the way you'd want an interviewer to hear it.</p></li>
+      <li><span class="n">08</span><h3>Repeat with emotion</h3><p>Picture the offer email arriving. Feel it while you speak.</p></li>
+      <li><span class="n">09</span><h3>Declare your identity</h3><p>Not "looking for work." Say <span class="say">"I am a DevOps and data professional."</span></p></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Stop saying, start saying</h2>
+    <p class="lead">When one of these slips out, cancel it and say the line on the right.</p>
+    <div class="swap">
+      <div class="pair"><span class="stop">I'm jobless.</span><span class="arrow" aria-hidden="true">→</span><span class="start">I'm between roles and preparing for the right one.</span></div>
+      <div class="pair"><span class="stop">I'm too late to switch.</span><span class="arrow" aria-hidden="true">→</span><span class="start">My years of experience are my edge.</span></div>
+      <div class="pair"><span class="stop">I'll never clear the coding round.</span><span class="arrow" aria-hidden="true">→</span><span class="start">My SQL and Python get sharper every day.</span></div>
+      <div class="pair"><span class="stop">Nobody replies to my applications.</span><span class="arrow" aria-hidden="true">→</span><span class="start">The right recruiter is about to find my profile.</span></div>
+      <div class="pair"><span class="stop">I got rejected again.</span><span class="arrow" aria-hidden="true">→</span><span class="start">Every no brings me closer to my yes.</span></div>
+      <div class="pair"><span class="stop">I'm not good enough.</span><span class="arrow" aria-hidden="true">→</span><span class="start">I am learning fast, and I am enough.</span></div>
+      <div class="pair"><span class="stop">Everyone else is ahead of me.</span><span class="arrow" aria-hidden="true">→</span><span class="start">I am on my own path, and it is leading somewhere great.</span></div>
+      <div class="pair"><span class="stop">I'm wasting my days.</span><span class="arrow" aria-hidden="true">→</span><span class="start">Every study hour is an investment in my future.</span></div>
+      <div class="pair"><span class="stop">What if I fail the interview?</span><span class="arrow" aria-hidden="true">→</span><span class="start">I am prepared, and I will show them my best.</span></div>
+      <div class="pair"><span class="stop">I can't afford anything right now.</span><span class="arrow" aria-hidden="true">→</span><span class="start">Money is coming to me through my new job.</span></div>
+      <div class="pair"><span class="stop">It's taking too long.</span><span class="arrow" aria-hidden="true">→</span><span class="start">The right job is worth the wait, and it is close.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Affirmations for every part of you</h2>
+    <p class="lead">Pick the card that fits your mood today and read it aloud, line by line.</p>
+    <div class="aff-grid">
+      <article class="aff-card"><h3>Confidence</h3><ul>
+        <li>I believe in myself completely.</li><li>I speak with power and clarity.</li><li>I deserve the success I am creating.</li><li>My experience makes me stand out.</li></ul></article>
+      <article class="aff-card"><h3>Interviews</h3><ul>
+        <li>I enjoy talking about my work.</li><li>I stay calm when questions get hard.</li><li>Interviewers like me and trust me.</li><li>I turn every interview into an offer.</li></ul></article>
+      <article class="aff-card"><h3>Learning</h3><ul>
+        <li>Concepts click for me easily.</li><li>I remember what I study.</li><li>I practise until I master it.</li><li>I am becoming an expert, one hour at a time.</li></ul></article>
+      <article class="aff-card"><h3>Money and abundance</h3><ul>
+        <li>Money flows to me from my work.</li><li>I am paid well for the value I bring.</li><li>My bank balance grows every month.</li><li>I have more than enough.</li></ul></article>
+      <article class="aff-card"><h3>Resilience</h3><ul>
+        <li>Setbacks make me stronger.</li><li>I rise every time I fall.</li><li>Rejection is redirection.</li><li>I never give up on myself.</li></ul></article>
+      <article class="aff-card"><h3>Gratitude</h3><ul>
+        <li>Thank you for my new job.</li><li>Thank you for my health and energy.</li><li>Thank you for my family's love.</li><li>Thank you for this fresh start.</li></ul></article>
+      <article class="aff-card"><h3>Peace of mind</h3><ul>
+        <li>I release worry and breathe slowly.</li><li>Everything is working out for me.</li><li>I sleep well and wake up hopeful.</li><li>I am safe, supported and guided.</li></ul></article>
+      <article class="aff-card"><h3>My future</h3><ul>
+        <li>I see myself joining my new team.</li><li>I see the offer email in my inbox.</li><li>I see myself growing year after year.</li><li>My best days are ahead of me.</li></ul></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Your daily ritual</h2>
+    <p class="lead">Words set the direction. Your study hours get you there.</p>
+    <div class="ritual">
+      <div class="slot"><span class="t">7:00 AM · after ABC juice</span><p>Say <strong>three affirmations</strong> aloud from the top of this page.</p></div>
+      <div class="slot"><span class="t">Before each study hour</span><p>One line: <strong>"I learn this easily and I explain it clearly."</strong></p></div>
+      <div class="slot"><span class="t">10:30 PM · before sleep</span><p>Close the day with <strong>"Thank you for my offer letter."</strong></p></div>
+    </div>
+  </section>
+
+  <section class="closing">
+    <blockquote>The offer is already on its way. I am getting ready to receive it.</blockquote>
+    <p>Come back here every morning, and read everything again before you sleep.</p>
+    <button class="primary" id="startRead" type="button">Start bedtime reading</button>
+  </section>
+  <div class="reader" id="reader" hidden role="dialog" aria-modal="true" aria-label="Bedtime reading">
+    <p class="rp" id="rp">Bedtime reading</p>
+    <p class="rl" id="rl" aria-live="polite"></p>
+    <div class="rbar"><i id="rbar"></i></div>
+    <div class="btns">
+      <button class="primary" id="rnext" type="button">Next</button>
+      <button class="ghost" id="rclose" type="button">Stop for now</button>
+    </div>
+    <p class="rhint" id="rhint">Read each line slowly, out loud if you can.</p>
+  </div>
+
+<section class="backup" aria-label="Backup">
+  <h2>Back up your progress</h2>
+  <p class="lead">Everything is saved on this phone only. Download a backup now and then, and restore it if you change phones or clear your browser.</p>
+  <div class="btns" style="justify-content:flex-start">
+    <button class="primary" id="bk-save" type="button">Download backup</button>
+    <button class="ghost" id="bk-load" type="button">Restore from backup</button>
+    <input id="bk-file" type="file" accept="application/json,.json" hidden>
+  </div>
+  <p class="note-status" id="bk-msg"></p>
+</section>
+</main>
+
+<script>
+(function () {
+  var AFF = [
+    "I am the candidate they have been looking for.",
+    "Thank you for my offer letter.",
+    "I am calm, clear and confident in every interview.",
+    "Every hour I study, I become the person they hire.",
+    "My experience is valuable, and I explain it well.",
+    "Opportunities find me, and I am ready for them.",
+    "I write clean SQL and Python, even under pressure.",
+    "Every no is leading me to my yes.",
+    "I am a skilled engineer, and my next team is waiting for me.",
+    "I show up every single day. That is who I am.",
+    "Money and work flow to me easily.",
+    "I am grateful for the job that is already mine.",
+    "My offer letter is on its way to my inbox.",
+    "I am worthy of a great salary and a respectful team.",
+    "Recruiters notice my profile and call me back.",
+    "I answer every interview question with clarity and calm.",
+    "I learn new technology quickly and enjoy it.",
+    "My mind is sharp, my body is strong and my heart is calm.",
+    "This gap is my preparation season, not my ending.",
+    "I trust my timing. The right door opens at the right moment.",
+    "I am proud of how far I have already come.",
+    "Good news is coming to me this week.",
+    "I belong in rooms with brilliant engineers.",
+    "I solve problems that companies are happy to pay for.",
+    "Every day I am more ready than yesterday.",
+    "I let go of fear. I choose faith in myself.",
+    "My family will be proud of the news I share soon.",
+    "I am disciplined, focused and unstoppable.",
+    "My skills in Java, SQL, Python, DevOps and Cloud open doors for me.",
+    "I welcome the phone call that changes everything.",
+    "I am already living the life of an employed, confident professional.",
+    "Today I take one more step towards my dream job."
+  ];
+  window.__AFF = AFF;
+  var aff = document.getElementById("aff"), countEl = document.getElementById("count");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var dayIndex = Math.floor(Date.now() / 86400000) % AFF.length, idx = dayIndex;
+
+  // Sand: particles settle into a new cymatic pattern for each affirmation
+  var cv = document.getElementById("sand"), ctx = cv.getContext("2d"), W = 0, H = 0, R = 0, cx = 0, cy = 0, dpr = 1;
+  var N = 3200, P = [], pattern = 0;
+  function size() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx = W / 2; cy = H * 0.31; R = Math.min(W * 0.4, H * 0.28);
+  }
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  // each pattern returns a point on its lines, in unit-disc coordinates
+  var PATTERNS = [
+    function () { var k = [0.25, 0.55, 0.88][Math.floor(Math.random() * 3)], a = rnd(0, 6.283); return [Math.cos(a) * k, Math.sin(a) * k]; },
+    function () { var a = Math.floor(Math.random() * 2) * 1.5708, t = rnd(-0.95, 0.95); return [Math.cos(a) * t, Math.sin(a) * t]; },
+    function () { var a = Math.floor(Math.random() * 8) * 0.785, t = rnd(0.05, 0.95); return [Math.cos(a) * t, Math.sin(a) * t]; },
+    function () { var a = rnd(0, 6.283), r = 0.6 + 0.3 * Math.cos(6 * a); if (Math.random() < 0.35) r = 0.92; return [Math.cos(a) * r, Math.sin(a) * r]; },
+    function () { if (Math.random() < 0.5) { var a = Math.floor(Math.random() * 12) * 0.5236, t = rnd(0.1, 0.95); return [Math.cos(a) * t, Math.sin(a) * t]; }
+      var a2 = rnd(0, 6.283), k = [0.35, 0.6, 0.85][Math.floor(Math.random() * 3)]; return [Math.cos(a2) * k * (1 + 0.06 * Math.cos(12 * a2)), Math.sin(a2) * k * (1 + 0.06 * Math.cos(12 * a2))]; }
+  ];
+  function retarget() {
+    var f = PATTERNS[pattern % PATTERNS.length];
+    P.forEach(function (p) { var t = f(); var sp = Math.random() < 0.85 ? 0.055 : 0.16; p.tx = t[0] + rnd(-sp, sp); p.ty = t[1] + rnd(-sp, sp); });
+  }
+  function init() {
+    P = [];
+    for (var i = 0; i < N; i++) { var a = rnd(0, 6.283), r = Math.sqrt(Math.random()) * 0.95;
+      P.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, tx: 0, ty: 0, s: rnd(0.6, 1.9), h: Math.random() }); }
+    retarget();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // the dish
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(1, 0.62);
+    var g = ctx.createRadialGradient(0, 0, R * 0.2, 0, 0, R * 1.08);
+    g.addColorStop(0, "rgba(40,22,12,0.9)"); g.addColorStop(1, "rgba(14,9,6,0.95)");
+    ctx.beginPath(); ctx.arc(0, 0, R * 1.08, 0, 6.283); ctx.fillStyle = g; ctx.fill();
+    ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(233,140,80,0.55)"; ctx.stroke();
+    for (var i = 0; i < P.length; i++) {
+      var p = P[i];
+      ctx.fillStyle = p.h < 0.5 ? "rgba(233,160,107,0.85)" : (p.h < 0.85 ? "rgba(255,120,60,0.8)" : "rgba(246,214,180,0.9)");
+      ctx.fillRect(p.x * R, p.y * R, p.s, p.s);
+    }
+    ctx.restore();
+  }
+  var running = false;
+  function step() {
+    var moving = false;
+    for (var i = 0; i < P.length; i++) {
+      var p = P[i], dx = p.tx - p.x, dy = p.ty - p.y;
+      if (Math.abs(dx) + Math.abs(dy) > 0.002) { moving = true; p.x += dx * 0.045 + rnd(-0.003, 0.003); p.y += dy * 0.045 + rnd(-0.003, 0.003); }
+    }
+    draw();
+    if (moving) requestAnimationFrame(step); else running = false;
+  }
+  function animate() {
+    if (reduce) { P.forEach(function (p) { p.x = p.tx; p.y = p.ty; }); draw(); return; }
+    if (!running) { running = true; requestAnimationFrame(step); }
+  }
+
+  function show(i, instant) {
+    idx = (i + AFF.length) % AFF.length; pattern = idx;
+    retarget(); animate();
+    if (instant || reduce) { aff.textContent = AFF[idx]; return; }
+    aff.classList.add("fade");
+    setTimeout(function () { aff.textContent = AFF[idx]; aff.classList.remove("fade"); }, 450);
+  }
+
+  // per-viewer counter of days spoken aloud
+  var KEY = "offer-coming-spoken";
+  function today() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function render(s) {
+    var days = Object.keys(s.days || {}).length, t = (s.days || {})[today()] || 0;
+    if (!days) { countEl.textContent = "Read it once, slowly, with feeling."; return; }
+    countEl.textContent = "Spoken " + t + (t === 1 ? " time" : " times") + " today · " + days + (days === 1 ? " day" : " days") + " of speaking it so far";
+  }
+  document.getElementById("spoke").addEventListener("click", function () {
+    var s = load(); s.days = s.days || {}; s.days[today()] = (s.days[today()] || 0) + 1;
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+    render(s); show(idx + 1);
+  });
+  document.getElementById("next").addEventListener("click", function () { show(idx + 1); });
+
+  size(); init();
+  P.forEach(function (p) { var t = PATTERNS[0](); p.x = t[0]; p.y = t[1]; });
+  show(dayIndex, true);
+  render(load());
+  window.addEventListener("resize", function () { size(); draw(); });
+})();
+</script>
+<script>
+(function () {
+  var START = new Date(2026, 9, 17), N = 21;
+  function key(dt) { return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
+  var DAYS = [];
+  for (var i = 0; i < N; i++) DAYS.push(key(new Date(START.getFullYear(), START.getMonth(), START.getDate() + i)));
+  var DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  var LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var CAT = { routine: "Routine", learning: "Learning", fitness: "Fitness", personal: "Personal", food: "Food" };
+  // [title, tasks, offOnWeekends]
+  var GROUPS = [
+    ["Morning", [
+      ["wake", "Wake up by 7", "7:00 AM", "routine"],
+      ["juice", "ABC juice on waking", "7:00 AM", "routine"],
+      ["plants_am", "Water plants", "7:00 AM", "routine"],
+      ["sql", "SQL", "7:30 – 8:30 AM", "learning"],
+      ["python", "Python", "9:00 – 10:00 AM", "learning"],
+      ["badminton", "Badminton", "10:00 – 11:00 AM", "fitness"],
+      ["devops", "DevOps", "11:00 AM – 12:00 PM", "learning"]
+    ], false],
+    ["Afternoon", [
+      ["cloud", "Cloud", "1:30 – 2:30 PM", "learning"],
+      ["splunk", "Splunk", "2:30 – 3:30 PM", "learning"],
+      ["ai", "AI", "4:00 – 5:00 PM", "learning"]
+    ], false],
+    ["Evening", [
+      ["gym", "Gym", "5:30 – 6:30 PM", "fitness"],
+      ["plants_pm", "Water plants", "6:30 PM", "routine"],
+      ["sb", "SB", "7:00 – 7:40 PM", "personal"],
+      ["read", "Read a book", "10:15 – 10:30 PM", "personal"]
+    ], true],
+    ["Night", [
+      ["readall", "Read all manifestations", "10:30 – 10:45 PM · compulsory · tap to start", "personal"],
+      ["sleep11", "Sleep by 11", "by 11:00 PM", "routine"]
+    ], false],
+    ["All day", [
+      ["fruit", "One fruit", "Any time", "food"],
+      ["fiber", "Fiber", "Any time", "food"],
+      ["protein", "Protein", "Any time", "food"],
+      ["nosugar", "No sugar (except in juice)", "All day", "food"],
+      ["nojunk", "No junk / packaged food", "All day", "food"]
+    ], false],
+    ["Next morning", [
+      ["sleep78", "Slept 7–8 hours", "Tick after waking", "routine"]
+    ], false]
+  ];
+
+  function parts(d) { var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  // Paused until (and including) this date
+  var PAUSED = { badminton: "2026-10-22", gym: "2026-10-22", juice: "2026-10-22", plants_am: "2026-10-22" };
+  function isWeekend(d) { var w = parts(d).getDay(); return w === 0 || w === 6; }
+  // Your own tasks: {id, name, time, from: "YYYY-MM-DD", only: bool}
+  var CUSTOM = [];
+  function customFor(d) { return CUSTOM.filter(function (t) { return t.only ? t.from === d : t.from <= d; }); }
+  function idsFor(d) {
+    var out = [], we = isWeekend(d);
+    GROUPS.forEach(function (g) { if (we && g[2]) return; g[1].forEach(function (t) { if (PAUSED[t[0]] && d <= PAUSED[t[0]]) return; out.push(t[0]); }); });
+    customFor(d).forEach(function (t) { out.push(t.id); });
+    return out;
+  }
+  var IDS_BY_DAY = {};
+  function recompute() { DAYS.forEach(function (d) { IDS_BY_DAY[d] = idsFor(d); }); }
+  recompute();
+
+  var state = {}, writing = {}, dirty = {}, db = null, boxes = {}, NOTES = {}, noteTimer = null, noteSaving = {};
+  DAYS.forEach(function (d) { state[d] = {}; });
+
+  function clean(d, obj) {
+    var out = {};
+    if (obj && typeof obj === "object") Object.keys(obj).forEach(function (id) { if (obj[id] === true && /^[A-Za-z0-9_]{1,40}$/.test(id)) out[id] = true; });
+    return out;
+  }
+  function validCustom(list) {
+    return (Array.isArray(list) ? list : []).filter(function (t) {
+      return t && typeof t.id === "string" && /^c_[a-z0-9]{1,20}$/.test(t.id) && typeof t.name === "string" && typeof t.from === "string";
+    }).map(function (t) { return { id: t.id, name: t.name.slice(0, 80), time: String(t.time || "").slice(0, 30), from: t.from, only: !!t.only }; });
+  }
+  function loadLocal() {
+    try {
+      var raw = JSON.parse(localStorage.getItem("daily-checklist-21d") || "{}");
+      DAYS.forEach(function (d) { state[d] = clean(d, raw[d]); });
+      CUSTOM = validCustom(JSON.parse(localStorage.getItem("daily-checklist-custom") || "[]"));
+      var n = JSON.parse(localStorage.getItem("daily-checklist-notes") || "{}");
+      if (n && typeof n === "object") Object.keys(n).forEach(function (k) { if (typeof n[k] === "string") NOTES[k] = n[k]; });
+      recompute();
+    } catch (e) {}
+  }
+  function saveLocal() {
+    try {
+      localStorage.setItem("daily-checklist-21d", JSON.stringify(state));
+      localStorage.setItem("daily-checklist-custom", JSON.stringify(CUSTOM));
+      localStorage.setItem("daily-checklist-notes", JSON.stringify(NOTES));
+    } catch (e) {}
+  }
+
+  function todayKey() {
+    var k = key(new Date());
+    return DAYS.indexOf(k) >= 0 ? k : (k > DAYS[DAYS.length - 1] ? DAYS[DAYS.length - 1] : DAYS[0]);
+  }
+  var current = todayKey();
+  function count(d) { return IDS_BY_DAY[d].filter(function (id) { return state[d][id] === true; }).length; }
+
+  var $ = function (id) { return document.getElementById(id); };
+  function setStatus(text, bad) { var s = $("status"); s.textContent = text; s.className = "status" + (bad ? " bad" : ""); }
+
+  function buildTabs() {
+    var host = $("cal"); host.textContent = "";
+    for (var w = 0; w < N / 7; w++) {
+      var a = parts(DAYS[w * 7]), b = parts(DAYS[w * 7 + 6]);
+      var lab = document.createElement("div"); lab.className = "week-label";
+      lab.textContent = "Week " + (w + 1) + " · " + a.getDate() + " " + MON[a.getMonth()] + " – " + b.getDate() + " " + MON[b.getMonth()];
+      var grid = document.createElement("div"); grid.className = "tabs";
+      DAYS.slice(w * 7, w * 7 + 7).forEach(function (d) {
+        var dt = parts(d), btn = document.createElement("button");
+        btn.type = "button"; btn.className = "tab" + (isWeekend(d) ? " we" : ""); btn.id = "tab-" + d;
+        btn.innerHTML = '<span class="dow"></span><span class="num"></span><span class="cnt"></span>';
+        btn.children[0].textContent = DOW[dt.getDay()]; btn.children[1].textContent = dt.getDate();
+        btn.setAttribute("aria-label", LONG[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()]);
+        btn.addEventListener("click", function () { current = d; buildList(); refresh(); });
+        grid.appendChild(btn);
+      });
+      host.appendChild(lab); host.appendChild(grid);
+    }
+  }
+
+  function buildList() {
+    var host = $("list"); host.textContent = ""; boxes = {};
+    var we = isWeekend(current);
+    GROUPS.forEach(function (g) {
+      var sec = document.createElement("section"); sec.className = "group";
+      var h = document.createElement("h2"); h.textContent = g[0]; sec.appendChild(h);
+      if (we && g[2]) {
+        var f = document.createElement("div"); f.className = "free";
+        var s = document.createElement("strong"); s.textContent = "Free evening";
+        f.appendChild(s); f.appendChild(document.createTextNode("Nothing to tick. The evening is yours."));
+        sec.appendChild(f); host.appendChild(sec); return;
+      }
+      g[1].forEach(function (t) {
+        if (IDS_BY_DAY[current].indexOf(t[0]) < 0) return;
+        var row = document.createElement("label"); row.className = "row";
+        var cb = document.createElement("input"); cb.type = "checkbox"; cb.id = "cb-" + t[0];
+        var txt = document.createElement("span"); txt.className = "txt";
+        var name = document.createElement("span"); name.className = "name"; name.textContent = t[1];
+        var meta = document.createElement("span"); meta.className = "meta";
+        var dot = document.createElement("i"); dot.className = "dot"; dot.style.background = "var(--c-" + t[3] + ")";
+        var when = document.createElement("span"); when.textContent = t[2];
+        var cat = document.createElement("span"); cat.textContent = CAT[t[3]];
+        meta.appendChild(when); meta.appendChild(dot); meta.appendChild(cat);
+        txt.appendChild(name); txt.appendChild(meta); row.appendChild(cb); row.appendChild(txt);
+        if (t[0] === "readall") {
+          cb.disabled = true; row.classList.add("locked");
+          row.addEventListener("click", function (e) {
+            e.preventDefault();
+            if (state[current].readall || !window.__openReader) return;
+            var d = current;
+            window.__openReader(function () { state[d].readall = true; saveLocal(); refresh(); push(d); });
+          });
+        } else {
+          cb.addEventListener("change", function () { toggle(t[0], cb.checked); });
+        }
+        boxes[t[0]] = { cb: cb, row: row };
+        sec.appendChild(row);
+      });
+      host.appendChild(sec);
+    });
+    buildMine(host);
+    buildLearn(host);
+  }
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  function buildMine(host) {
+    var sec = el("section", "group mine");
+    sec.appendChild(el("h2", null, "My own tasks"));
+    customFor(current).forEach(function (t) {
+      var wrap = el("div", "mine-row");
+      var row = el("label", "row");
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.id = "cb-" + t.id;
+      var txt = el("span", "txt"), meta = el("span", "meta");
+      txt.appendChild(el("span", "name", t.name));
+      var dot = el("i", "dot"); dot.style.background = "var(--c-personal)";
+      meta.appendChild(el("span", null, t.time || "Any time")); meta.appendChild(dot);
+      meta.appendChild(el("span", null, t.only ? "Only this day" : "Every day"));
+      txt.appendChild(meta); row.appendChild(cb); row.appendChild(txt);
+      cb.addEventListener("change", function () { toggle(t.id, cb.checked); });
+      var del = el("button", "del", "Remove"); del.type = "button";
+      del.setAttribute("aria-label", "Remove " + t.name);
+      del.addEventListener("click", function () {
+        if (del.dataset.sure !== "1") { del.dataset.sure = "1"; del.textContent = "Tap again to remove"; return; }
+        CUSTOM = CUSTOM.filter(function (x) { return x.id !== t.id; }); afterCustomChange();
+      });
+      boxes[t.id] = { cb: cb, row: row };
+      wrap.appendChild(row); wrap.appendChild(del); sec.appendChild(wrap);
+    });
+    var form = el("form", "add-form");
+    form.innerHTML =
+      '<label class="fl" for="add-name">Add your own task</label>' +
+      '<input id="add-name" type="text" maxlength="80" placeholder="e.g. Apply to 5 jobs on Naukri" required>' +
+      '<div class="add-row"><input id="add-time" type="text" maxlength="30" placeholder="Time (optional)">' +
+      '<select id="add-when"><option value="every">Every day</option><option value="only">Only this day</option></select>' +
+      '<button class="primary" type="submit">Add</button></div>';
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = form.querySelector("#add-name").value.trim(); if (!name) return;
+      CUSTOM.push({ id: "c_" + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36), name: name.slice(0, 80),
+        time: form.querySelector("#add-time").value.trim().slice(0, 30), from: current, only: form.querySelector("#add-when").value === "only" });
+      afterCustomChange();
+    });
+    sec.appendChild(form);
+    host.appendChild(sec);
+  }
+
+  function afterCustomChange() {
+    recompute(); saveLocal(); buildList(); refresh();
+    if (db) db.doc("settings/tasks").set({ tasks: CUSTOM }).then(function () { setStatus("Saved"); }, function () { setStatus("Couldn't save your task list. It is kept on this device only.", true); });
+  }
+
+  function buildLearn(host) {
+    var sec = el("section", "group learn");
+    sec.appendChild(el("h2", null, "Learned today · new things"));
+    var lab = el("label", "fl", "Something valuable I learned or want to remember on " + (function (dt) { return LONG[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()]; })(parts(current)));
+    lab.setAttribute("for", "learn-text");
+    var ta = document.createElement("textarea"); ta.id = "learn-text"; ta.rows = 4; ta.maxLength = 4000;
+    ta.placeholder = "e.g. Learned window functions in SQL: ROW_NUMBER() OVER (PARTITION BY ...)"; ta.value = NOTES[current] || "";
+    var saved = el("p", "note-status", "");
+    ta.addEventListener("input", function () {
+      var d = current; NOTES[d] = ta.value; saveLocal(); saved.textContent = "Saving…";
+      clearTimeout(noteTimer);
+      noteTimer = setTimeout(function () { saveNote(d, saved); }, 900);
+    });
+    sec.appendChild(lab); sec.appendChild(ta); sec.appendChild(saved);
+    var past = DAYS.filter(function (d) { return d !== current && (NOTES[d] || "").trim(); }).reverse();
+    if (past.length) {
+      var list = el("div", "learn-list");
+      list.appendChild(el("p", "fl", "My learnings so far"));
+      past.forEach(function (d) {
+        var dt = parts(d), item = el("div", "learn-item");
+        item.appendChild(el("span", "ld", DOW[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()]));
+        item.appendChild(el("p", null, NOTES[d]));
+        list.appendChild(item);
+      });
+      sec.appendChild(list);
+    }
+    host.appendChild(sec);
+  }
+
+  function saveNote(d, statusEl) {
+    if (!db) { if (statusEl) statusEl.textContent = "Saved on this device"; return; }
+    noteSaving[d] = true;
+    db.doc("notes/" + d).set({ text: NOTES[d] || "" }).then(function () {
+      noteSaving[d] = false; if (statusEl) statusEl.textContent = "Saved";
+    }, function () { noteSaving[d] = false; if (statusEl) statusEl.textContent = "Couldn't save. It is kept on this device only."; });
+  }
+
+  function refresh() {
+    Object.keys(boxes).forEach(function (id) {
+      var b = boxes[id], on = state[current][id] === true;
+      if (b.cb.checked !== on) b.cb.checked = on;
+      b.row.classList.toggle("done", on);
+    });
+    var n = count(current), tot = IDS_BY_DAY[current].length, dt = parts(current), all = 0, possible = 0;
+    $("score").textContent = n; $("total").textContent = tot;
+    $("dayname").textContent = LONG[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()];
+    $("bar").style.width = (100 * n / tot) + "%";
+    DAYS.forEach(function (d) {
+      var tab = $("tab-" + d), c = count(d); all += c; possible += IDS_BY_DAY[d].length;
+      tab.setAttribute("aria-pressed", d === current ? "true" : "false");
+      tab.children[2].textContent = c + "/" + IDS_BY_DAY[d].length;
+    });
+    $("week").textContent = all + " of " + possible + " ticks done across the 21 days.";
+  }
+
+  function toggle(id, on) {
+    var day = current;
+    if (on) state[day][id] = true; else delete state[day][id];
+    saveLocal(); refresh(); push(day);
+  }
+
+  function push(day) {
+    if (!db) return;
+    if (writing[day]) { dirty[day] = true; return; }
+    writing[day] = true; setStatus("Saving…");
+    var attempt = 0;
+    (function send() {
+      dirty[day] = false;
+      db.doc("days/" + day).set({ done: clean(day, state[day]) }).then(function () {
+        if (dirty[day]) return send();
+        writing[day] = false; setStatus("Saved");
+      }, function (e) {
+        if (e && e.code === "unavailable" && attempt++ < 1) return setTimeout(send, 800 + Math.random() * 800);
+        writing[day] = false; dirty[day] = false;
+        setStatus("Couldn't save that tick. It is kept on this device only.", true);
+      });
+    })();
+  }
+
+  loadLocal(); buildTabs(); buildList(); refresh();
+
+  var use = window.claude && window.claude.use ? window.claude.use("db") : Promise.resolve(null);
+  use.then(function (ns) {
+    if (!ns) { setStatus("Saved on this phone"); return; }
+    db = ns;
+    db.collection("days").onSnapshot(function (snap) {
+      var seen = {};
+      snap.docs.forEach(function (doc) {
+        if (DAYS.indexOf(doc.id) < 0) return;
+        seen[doc.id] = true;
+        if (writing[doc.id] || dirty[doc.id]) return;
+        var data = doc.data() || {};
+        state[doc.id] = clean(doc.id, data.done);
+      });
+      if (!snap.metadata.fromCache) DAYS.forEach(function (d) { if (!seen[d] && !writing[d] && !dirty[d]) state[d] = {}; });
+      saveLocal(); refresh();
+      if (!snap.metadata.hasPendingWrites && !snap.metadata.fromCache) setStatus("Saved");
+    }, function () { setStatus("Live sync stopped. Reload the page to reconnect.", true); });
+    db.doc("settings/tasks").onSnapshot(function (doc) {
+      if (!doc.exists) { if (CUSTOM.length && !doc.metadata.fromCache) db.doc("settings/tasks").set({ tasks: CUSTOM }).catch(function () {}); return; }
+      var next = validCustom((doc.data() || {}).tasks);
+      if (JSON.stringify(next) === JSON.stringify(CUSTOM)) return;
+      CUSTOM = next; recompute(); saveLocal();
+      var a = document.activeElement; if (a && a.closest && a.closest(".add-form")) { refresh(); return; }
+      buildList(); refresh();
+    }, function () {});
+    db.collection("notes").onSnapshot(function (snap) {
+      var changed = false;
+      snap.docs.forEach(function (doc) {
+        if (noteSaving[doc.id]) return;
+        var t = (doc.data() || {}).text; if (typeof t !== "string") return;
+        if (NOTES[doc.id] !== t) { NOTES[doc.id] = t; changed = true; }
+      });
+      if (!changed) return;
+      saveLocal();
+      var ta = $("learn-text"); if (ta && document.activeElement === ta) return;
+      buildList(); refresh();
+    }, function () {});
+  }, function () { setStatus("Saved on this phone"); });
+})();
+</script>
+<script>
+(function () {
+  var ov = document.getElementById("reader"), rl = document.getElementById("rl"), rp = document.getElementById("rp"),
+      rbar = document.getElementById("rbar"), next = document.getElementById("rnext"), hint = document.getElementById("rhint");
+  var lines = [], i = 0, onDone = null, timer = null, HOLD = 2500;
+  function collect() {
+    var seen = {}, out = [];
+    function add(s) { s = (s || "").replace(/^"|"$/g, "").trim(); if (s && !seen[s]) { seen[s] = 1; out.push(s); } }
+    (window.__AFF || []).forEach(add);
+    document.querySelectorAll(".practices .say").forEach(function (el) { add(el.textContent); });
+    document.querySelectorAll(".swap .start").forEach(function (el) { add(el.textContent); });
+    document.querySelectorAll(".aff-card li").forEach(function (el) { add(el.textContent); });
+    document.querySelectorAll(".ritual strong").forEach(function (el) { add(el.textContent); });
+    add(document.querySelector(".closing blockquote").textContent);
+    return out;
+  }
+  function show() {
+    rl.textContent = lines[i];
+    rp.textContent = "Line " + (i + 1) + " of " + lines.length;
+    rbar.style.width = (100 * i / lines.length) + "%";
+    next.textContent = i === lines.length - 1 ? "I have read them all" : "Next";
+    next.disabled = true; clearTimeout(timer);
+    timer = setTimeout(function () { next.disabled = false; next.focus(); }, HOLD);
+  }
+  function open(cb) {
+    lines = collect(); i = 0; onDone = cb || null;
+    ov.hidden = false; document.body.style.overflow = "hidden";
+    hint.textContent = "Read each line slowly, out loud if you can.";
+    show();
+  }
+  function close() { clearTimeout(timer); ov.hidden = true; document.body.style.overflow = ""; }
+  next.addEventListener("click", function () {
+    if (i < lines.length - 1) { i++; show(); return; }
+    rbar.style.width = "100%";
+    rl.textContent = "Done. Thank you for my offer letter. Sleep well.";
+    rp.textContent = "All " + lines.length + " lines read";
+    next.hidden = true; hint.textContent = "Today's \"Read all manifestations\" is ticked.";
+    var cb = onDone; onDone = null; if (cb) cb();
+    setTimeout(function () { close(); next.hidden = false; }, 2600);
+  });
+  document.getElementById("rclose").addEventListener("click", close);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !ov.hidden) close(); });
+  window.__openReader = open;
+  document.getElementById("startRead").addEventListener("click", function () {
+    var row = document.getElementById("cb-readall");
+    if (row) row.closest("label").click(); else open(null);
+  });
+})();
+</script>
+
+
+<script>
+(function () {
+  var KEYS = ["daily-checklist-21d", "daily-checklist-custom", "daily-checklist-notes", "offer-coming-spoken"];
+  var msg = document.getElementById("bk-msg");
+  document.getElementById("bk-save").addEventListener("click", function () {
+    var data = { app: "my-offer-is-coming", saved: new Date().toISOString(), items: {} };
+    KEYS.forEach(function (k) { try { var v = localStorage.getItem(k); if (v != null) data.items[k] = v; } catch (e) {} });
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = "my-offer-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    msg.textContent = "Backup downloaded.";
+  });
+  var file = document.getElementById("bk-file");
+  document.getElementById("bk-load").addEventListener("click", function () { file.click(); });
+  file.addEventListener("change", function () {
+    var f = file.files && file.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var d = JSON.parse(r.result);
+        if (!d || d.app !== "my-offer-is-coming" || typeof d.items !== "object") throw 0;
+        KEYS.forEach(function (k) { if (typeof d.items[k] === "string") localStorage.setItem(k, d.items[k]); });
+        msg.textContent = "Restored. Reloading…"; setTimeout(function () { location.reload(); }, 600);
+      } catch (e) { msg.textContent = "That file isn't a backup from this app. Choose the my-offer-backup file you downloaded."; }
+    };
+    r.readAsText(f); file.value = "";
+  });
+  if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+})();
+</script>
+
+</body>
+</html>
