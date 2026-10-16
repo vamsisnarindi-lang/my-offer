@@ -190,6 +190,26 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 .check-sec { display: flex; flex-direction: column; gap: 20px; }
 .check-sec .lead { margin: 0; }
 
+/* ---- swipeable slides ---- */
+.slider { display: flex !important; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px; overscroll-behavior-x: contain; }
+.slider::-webkit-scrollbar { display: none; }
+.slider > * { flex: 0 0 86%; scroll-snap-align: center; }
+@media (min-width: 700px) { .slider > * { flex-basis: 70%; } }
+.aff-card { padding: 22px; }
+.aff-card h3 { font-size: 1.3rem; }
+.aff-card li { font-size: 1.05rem; }
+.practices li { justify-content: center; min-height: 170px; }
+.slide-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 14px; }
+.slide-nav button { width: 40px; height: 40px; padding: 0; border-radius: 50%; background: var(--card); color: var(--text);
+  border: 1px solid var(--line); font-size: 1.1rem; line-height: 1; }
+.slide-nav button:disabled { opacity: 0.35; cursor: default; }
+.dots { display: flex; gap: 7px; align-items: center; }
+.dots i { width: 7px; height: 7px; border-radius: 99px; background: var(--line); transition: width .25s ease, background .25s ease; }
+.dots i.on { width: 22px; background: var(--glow); box-shadow: 0 0 8px rgba(255, 212, 59, 0.5); }
+.slide-count { font-size: 0.8rem; color: var(--dim); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .slider { scroll-behavior: auto; } .dots i { transition: none; } }
+
 .backup { display: flex; flex-direction: column; gap: 6px; }
 .backup .lead { margin: 0 0 10px; }
 </style>
@@ -234,7 +254,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   <section>
     <h2>Nine ways to speak your offer into being</h2>
     <p class="lead">The practices from the post you saved, turned towards the one thing you want right now: a job offer.</p>
-    <ol class="practices">
+    <ol class="practices slider" aria-label="Nine practices, swipe to see more">
       <li><span class="n">01</span><h3>Speak in present tense</h3><p>Not "I will get a job." Say <span class="say">"I am a working engineer."</span></p></li>
       <li><span class="n">02</span><h3>Replace negatives</h3><p>Drop "nobody is hiring." Say <span class="say">"The right company is hiring me."</span></p></li>
       <li><span class="n">03</span><h3>Thank before you receive</h3><p>Every night: <span class="say">"Thank you for my offer letter."</span></p></li>
@@ -268,7 +288,7 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   <section>
     <h2>Affirmations for every part of you</h2>
     <p class="lead">Pick the card that fits your mood today and read it aloud, line by line.</p>
-    <div class="aff-grid">
+    <div class="aff-grid slider" aria-label="Affirmation cards, swipe to see more">
       <article class="aff-card"><h3>Confidence</h3><ul>
         <li>I believe in myself completely.</li><li>I speak with power and clarity.</li><li>I deserve the success I am creating.</li><li>My experience makes me stand out.</li></ul></article>
       <article class="aff-card"><h3>Interviews</h3><ul>
@@ -919,6 +939,43 @@ body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   document.getElementById("startRead").addEventListener("click", function () {
     var row = document.getElementById("cb-readall");
     if (row) row.closest("label").click(); else open(null);
+  });
+})();
+</script>
+
+<script>
+(function () {
+  document.querySelectorAll(".slider").forEach(function (sl) {
+    var items = Array.prototype.slice.call(sl.children); if (items.length < 2) return;
+    var nav = document.createElement("div"); nav.className = "slide-nav";
+    var prev = document.createElement("button"); prev.type = "button"; prev.textContent = "‹"; prev.setAttribute("aria-label", "Previous card");
+    var next = document.createElement("button"); next.type = "button"; next.textContent = "›"; next.setAttribute("aria-label", "Next card");
+    var dots = document.createElement("div"); dots.className = "dots"; dots.setAttribute("aria-hidden", "true");
+    items.forEach(function () { dots.appendChild(document.createElement("i")); });
+    var cnt = document.createElement("span"); cnt.className = "slide-count";
+    nav.appendChild(prev); nav.appendChild(dots); nav.appendChild(cnt); nav.appendChild(next);
+    sl.parentNode.insertBefore(nav, sl.nextSibling);
+    var idx = 0;
+    function current() {
+      var mid = sl.scrollLeft + sl.clientWidth / 2, best = 0, bd = Infinity;
+      items.forEach(function (it, i) { var c = it.offsetLeft - sl.offsetLeft + it.offsetWidth / 2, d = Math.abs(c - mid); if (d < bd) { bd = d; best = i; } });
+      return best;
+    }
+    function paint() {
+      idx = current();
+      Array.prototype.forEach.call(dots.children, function (d, i) { d.classList.toggle("on", i === idx); });
+      cnt.textContent = (idx + 1) + " / " + items.length;
+      prev.disabled = idx === 0; next.disabled = idx === items.length - 1;
+    }
+    function go(i) {
+      i = Math.max(0, Math.min(items.length - 1, i)); var it = items[i];
+      sl.scrollTo({ left: it.offsetLeft - sl.offsetLeft - (sl.clientWidth - it.offsetWidth) / 2 });
+    }
+    prev.addEventListener("click", function () { go(idx - 1); });
+    next.addEventListener("click", function () { go(idx + 1); });
+    var t = null; sl.addEventListener("scroll", function () { clearTimeout(t); t = setTimeout(paint, 60); }, { passive: true });
+    window.addEventListener("resize", paint);
+    paint();
   });
 })();
 </script>
