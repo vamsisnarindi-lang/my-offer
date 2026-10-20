@@ -390,6 +390,19 @@ body.reading .menu-btn, body.reading .dock, body.reading .toast { display: none 
 body.quizzing { overflow: hidden; }
 body.quizzing .menu-btn, body.quizzing .dock, body.quizzing .toast { display: none !important; }
 
+.qz-ro { cursor: default; }
+.qz-sub { margin: -4px 0 4px; color: var(--dim); font-size: 0.9rem; }
+.qz-done-list { display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.qz-done-item { display: flex; gap: 10px; align-items: flex-start; text-align: left; border-radius: 12px; padding: 10px 12px; background: var(--night);
+  border: 1px solid var(--line); color: var(--text); font-weight: 400; width: 100%; }
+.qz-done-item:hover, .qz-done-item:focus-visible { border-color: var(--sand); outline: none; }
+.qz-mark { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 0.8rem; }
+.qz-mark.ok { background: #4CC38A; color: #062414; } .qz-mark.no { background: #FF6B5A; color: #2A0703; }
+.qz-done-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qz-done-q { font-size: 0.95rem; overflow-wrap: anywhere; }
+.qz-done-a { font-size: 0.8rem; color: var(--dim); overflow-wrap: anywhere; }
+.qz-nav button:disabled { opacity: 0.4; }
+
 .backup { display: flex; flex-direction: column; gap: 6px; }
 .backup .lead { margin: 0 0 10px; }
 </style>
@@ -1467,20 +1480,23 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
   var TOTAL = 0; TOPICS.forEach(function (t) { TOTAL += Q[t[0]].length; });
 
   // state: P[topic][id] = 1 (right) or 0 (wrong);  D[date] = answered count
-  var KEY = "quiz-progress", P = {}, D = {}, db = null, saveT = null;
-  TOPICS.forEach(function (t) { P[t[0]] = {}; });
+  var KEY = "quiz-progress", P = {}, D = {}, H = {}, db = null, saveT = null;
+  TOPICS.forEach(function (t) { P[t[0]] = {}; H[t[0]] = []; });
   function cleanState(o) {
     var p = {}, d = {};
     TOPICS.forEach(function (t) { p[t[0]] = {}; var src = (o && o.p && o.p[t[0]]) || {};
       Object.keys(src).forEach(function (k) { if (/^[a-z0-9]{1,8}$/.test(k) && (src[k] === 0 || src[k] === 1)) p[t[0]][k] = src[k]; }); });
     var sd = (o && o.d) || {}; Object.keys(sd).forEach(function (k) { if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(k) && typeof sd[k] === "number") d[k] = sd[k]; });
-    return { p: p, d: d };
+    var h = {};
+    TOPICS.forEach(function (t) { var src = (o && o.h && o.h[t[0]]) || [];
+      h[t[0]] = (Array.isArray(src) ? src : []).filter(function (e) { return Array.isArray(e) && /^[a-z0-9]{1,8}$/.test(e[0]) && e[1] >= 0 && e[1] <= 3; }).slice(-300); });
+    return { p: p, d: d, h: h };
   }
-  try { var st = cleanState(JSON.parse(localStorage.getItem(KEY) || "{}")); P = st.p; D = st.d; } catch (e) {}
+  try { var st = cleanState(JSON.parse(localStorage.getItem(KEY) || "{}")); P = st.p; D = st.d; H = st.h; } catch (e) {}
   function persist() {
-    try { localStorage.setItem(KEY, JSON.stringify({ p: P, d: D })); } catch (e) {}
+    try { localStorage.setItem(KEY, JSON.stringify({ p: P, d: D, h: H })); } catch (e) {}
     if (!db) return; clearTimeout(saveT);
-    saveT = setTimeout(function () { db.doc("settings/quiz").set({ p: P, d: D }).then(function () { saveT = null; }, function () { saveT = null; }); }, 1200);
+    saveT = setTimeout(function () { db.doc("settings/quiz").set({ p: P, d: D, h: H }).then(function () { saveT = null; }, function () { saveT = null; }); }, 1200);
   }
   function today() { var x = new Date(); return x.getFullYear() + "-" + (x.getMonth() + 1) + "-" + x.getDate(); }
   function right(t) { var n = 0, ids = {}; Q[t].forEach(function (q) { ids[q.id] = 1; }); Object.keys(P[t]).forEach(function (k) { if (ids[k] && P[t][k] === 1) n++; }); return n; }
@@ -1491,10 +1507,16 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
   var $ = function (id) { return document.getElementById(id); };
   var panel = $("qz"), topic = "sql", filter = "all", cur = null, answered = false, order = {};
 
+  // Fisher-Yates with a 32-bit PRNG (mulberry32) seeded from the question, so the order is mixed but stable per question
+  function rng(seed) { return function () { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function seedOf(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  var SHUF = {};
   function shuffled(q) {
-    var idx = [0, 1, 2, 3], seed = parseInt(q.id, 36) || 7;
-    for (var i = 3; i > 0; i--) { seed = (seed * 1103515245 + 12345) & 0x7fffffff; var j = seed % (i + 1); var tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp; }
-    return idx;
+    if (SHUF[q.id]) return SHUF[q.id];
+    var idx = [0, 1, 2, 3], r = rng(seedOf("opts:" + q.id + q.q));
+    for (var i = 3; i > 0; i--) { var j = Math.floor(r() * (i + 1)); var tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp; }
+    return (SHUF[q.id] = idx);
   }
   function pool() {
     var list = Q[topic];
@@ -1535,10 +1557,11 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
     $("qz-fill").style.width = pct(topic) + "%"; $("qz-pct").textContent = pct(topic) + "%";
     var chips = $("qz-chips"); chips.textContent = "";
     var wl = wrongList(topic).length;
-    [["all", "All"], ["B", "Basic"], ["I", "Intermediate"], ["A", "Advanced"], ["wrong", "Retry wrong (" + wl + ")"]].forEach(function (c) {
+    var an = answeredList(topic).length;
+    [["all", "All"], ["B", "Basic"], ["I", "Intermediate"], ["A", "Advanced"], ["wrong", "Retry wrong (" + wl + ")"], ["done", "Answered (" + an + ")"]].forEach(function (c) {
       var b = document.createElement("button"); b.type = "button"; b.className = "qz-chip"; b.textContent = c[1];
       b.setAttribute("aria-pressed", filter === c[0] ? "true" : "false");
-      if (c[0] === "wrong" && !wl) b.disabled = true;
+      if ((c[0] === "wrong" && !wl) || (c[0] === "done" && !an)) b.disabled = true;
       b.addEventListener("click", function () { filter = c[0]; render(); });
       chips.appendChild(b);
     });
@@ -1546,9 +1569,66 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
     $("qz-today").textContent = n >= 10 ? "Today: " + n + " answered. Daily goal of 10 reached!" : "Today: " + n + " / 10 answered";
   }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  // answered questions for a topic, most recent first: [{q, choice}] (choice is null for answers saved before history existed)
+  function answeredList(t) {
+    var byId = {}; Q[t].forEach(function (q) { byId[q.id] = q; });
+    var out = [], seen = {};
+    for (var i = H[t].length - 1; i >= 0; i--) { var e = H[t][i]; if (byId[e[0]] && !seen[e[0]] && (e[0] in P[t])) { seen[e[0]] = 1; out.push({ q: byId[e[0]], choice: e[1] }); } }
+    Q[t].forEach(function (q) { if ((q.id in P[t]) && !seen[q.id]) out.push({ q: q, choice: null }); });
+    return out;
+  }
+  function optionsView(q, choice, container) {
+    var ord = shuffled(q), wrap = el("div", "qz-opts");
+    ord.forEach(function (oi, k) {
+      var b = el("div", "qz-opt qz-ro"); b.appendChild(el("span", "k", "ABCD"[k])); b.appendChild(el("span", null, q.opts[oi]));
+      if (oi === 0) b.classList.add("right"); else if (choice === oi) b.classList.add("wrong");
+      wrap.appendChild(b);
+    });
+    container.appendChild(wrap);
+  }
+  function reviewOne(list, i) {
+    header();
+    var card = $("qz-card"); card.textContent = ""; answered = true;
+    var item = list[i], q = item.q, ok = P[topic][q.id] === 1;
+    var meta = el("div", "qz-meta");
+    meta.appendChild(el("span", "qz-lv " + q.lv, LVN[q.lv]));
+    meta.appendChild(el("span", null, "Answered " + (i + 1) + " of " + list.length + (i === 0 ? " · most recent" : "")));
+    card.appendChild(meta);
+    card.appendChild(el("p", "qz-q", q.q));
+    optionsView(q, item.choice, card);
+    var ex = el("div", "qz-ex " + (ok ? "ok" : "no"));
+    ex.appendChild(el("strong", null, ok ? "You got this right" : "You got this wrong. The answer is: " + q.opts[0]));
+    ex.appendChild(el("p", null, q.ex)); card.appendChild(ex);
+    var act = el("div", "qz-actions qz-nav");
+    var older = el("button", "ghost", "‹ Previous"); older.type = "button"; older.disabled = i >= list.length - 1;
+    older.addEventListener("click", function () { reviewOne(list, i + 1); });
+    var newer = el("button", "ghost", "Next ›"); newer.type = "button"; newer.disabled = i === 0;
+    newer.addEventListener("click", function () { reviewOne(list, i - 1); });
+    var back = el("button", "primary", "Back to practice"); back.type = "button";
+    back.addEventListener("click", function () { if (filter === "done") filter = "all"; render(); });
+    act.appendChild(older); act.appendChild(newer); act.appendChild(back); card.appendChild(act);
+  }
+  function reviewList() {
+    var card = $("qz-card"); card.textContent = ""; answered = true;
+    var list = answeredList(topic);
+    card.appendChild(el("p", "qz-q", "Questions you've answered"));
+    card.appendChild(el("p", "qz-sub", "Most recent first. Tap any question to see the options, the right answer and the explanation."));
+    var ul = el("div", "qz-done-list");
+    list.forEach(function (it, i) {
+      var b = el("button", "qz-done-item"); b.type = "button";
+      var ok = P[topic][it.q.id] === 1;
+      b.appendChild(el("span", "qz-mark " + (ok ? "ok" : "no"), ok ? "✓" : "✗"));
+      var tx = el("span", "qz-done-text"); tx.appendChild(el("span", "qz-done-q", it.q.q));
+      tx.appendChild(el("span", "qz-done-a", "Answer: " + it.q.opts[0])); b.appendChild(tx);
+      b.addEventListener("click", function () { reviewOne(list, i); });
+      ul.appendChild(b);
+    });
+    card.appendChild(ul);
+  }
   function render() {
     header();
     var card = $("qz-card"); card.textContent = ""; answered = false;
+    if (filter === "done") { reviewList(); return; }
     cur = nextQuestion();
     if (!cur) {
       var d = el("div", "qz-done");
@@ -1557,7 +1637,7 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
       var rb = el("button", "ghost", "Reset this topic"); rb.type = "button";
       rb.addEventListener("click", function () {
         if (rb.dataset.sure !== "1") { rb.dataset.sure = "1"; rb.textContent = "Tap again to reset " + topic.toUpperCase(); return; }
-        P[topic] = {}; persist(); overview(); render();
+        P[topic] = {}; H[topic] = []; persist(); overview(); render();
       });
       d.appendChild(rb); card.appendChild(d); return;
     }
@@ -1575,6 +1655,12 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
       btns.push(b); opts.appendChild(b);
     });
     card.appendChild(opts);
+    var prevList = answeredList(topic);
+    if (prevList.length) {
+      var pv = el("div", "qz-actions"), pb = el("button", "ghost", "‹ Previous question"); pb.type = "button";
+      pb.addEventListener("click", function () { reviewOne(answeredList(topic), 0); });
+      pv.appendChild(pb); card.appendChild(pv);
+    }
   }
   function choose(oi, btn, btns, ord) {
     if (answered) return; answered = true;
@@ -1582,6 +1668,7 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
     btns.forEach(function (b, k) { b.disabled = true; if (ord[k] === 0) b.classList.add("right"); });
     if (!ok) btn.classList.add("wrong");
     P[topic][cur.id] = ok ? 1 : 0;
+    H[topic] = H[topic].filter(function (e) { return e[0] !== cur.id; }); H[topic].push([cur.id, oi]); if (H[topic].length > 300) H[topic].shift();
     D[today()] = (D[today()] || 0) + 1;
     persist(); header(); overview();
     var ex = el("div", "qz-ex " + (ok ? "ok" : "no"));
@@ -1590,7 +1677,11 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
     var card = $("qz-card"); card.appendChild(ex);
     var act = el("div", "qz-actions"), nx = el("button", "primary", "Next question"); nx.type = "button";
     nx.addEventListener("click", function () { render(); card.scrollIntoView({ block: "start", behavior: "smooth" }); });
-    act.appendChild(nx); card.appendChild(act);
+    act.appendChild(nx);
+    var pb2 = el("button", "ghost", "‹ Previous question"); pb2.type = "button";
+    pb2.addEventListener("click", function () { var L = answeredList(topic); reviewOne(L, L.length > 1 ? 1 : 0); });
+    if (answeredList(topic).length > 1) act.appendChild(pb2);
+    card.appendChild(act);
     nx.focus({ preventScroll: true });
     var after = pct(topic), n = D[today()];
     [25, 50, 75, 100].forEach(function (m) { if (before < m && after >= m) qtoast(m === 100 ? "Topic mastered! 100%" : m + "% of " + TOPICS.filter(function (x) { return x[0] === topic; })[0][1] + " mastered!", m === 100 ? "You know this topic inside out. Interviewers, here you come." : "Keep going. Every answer makes you more interview-ready."); });
@@ -1610,12 +1701,13 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
   use.then(function (ns) {
     if (!ns) return; db = ns;
     db.doc("settings/quiz").onSnapshot(function (doc) {
-      if (!doc.exists) { if (Object.keys(D).length) db.doc("settings/quiz").set({ p: P, d: D }).catch(function () {}); return; }
+      if (!doc.exists) { if (Object.keys(D).length) db.doc("settings/quiz").set({ p: P, d: D, h: H }).catch(function () {}); return; }
       if (saveT) return;
       var st2 = cleanState(doc.data());
       TOPICS.forEach(function (t) { Object.keys(st2.p[t[0]]).forEach(function (k) { if (!(k in P[t[0]]) || st2.p[t[0]][k] === 1) P[t[0]][k] = st2.p[t[0]][k]; }); });
       Object.keys(st2.d).forEach(function (k) { D[k] = Math.max(D[k] || 0, st2.d[k]); });
-      try { localStorage.setItem(KEY, JSON.stringify({ p: P, d: D })); } catch (e) {}
+      TOPICS.forEach(function (t) { if (st2.h[t[0]].length > H[t[0]].length) H[t[0]] = st2.h[t[0]]; });
+      try { localStorage.setItem(KEY, JSON.stringify({ p: P, d: D, h: H })); } catch (e) {}
       overview(); if (!panel.hidden && !answered) header();
     }, function () {});
   }, function () {});
