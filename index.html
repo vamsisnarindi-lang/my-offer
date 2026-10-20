@@ -498,7 +498,7 @@ body.concepting .menu-btn, body.concepting .dock, body.concepting .toast { displ
   <div id="list" style="display:flex;flex-direction:column;gap:18px"></div>
 
   <p class="foot" id="week"></p>
-  <p class="foot">Badminton and DevOps swap hours on days the class runs 11–12. Tick "Slept 7–8 hours" the next morning. Badminton, gym, ABC juice and morning plant watering are off until 22 Oct and start again on Fri 23 Oct.</p>
+  <p class="foot">Badminton and DevOps swap hours on days the class runs 11–12. Tick "Slept 7–8 hours" the next morning. Badminton, gym, ABC juice and morning plant watering are off until 22 Oct and start again on Fri 23 Oct. Evening plant watering, reading, no junk food and no sugar are off until 21 Oct and start again on Thu 22 Oct.</p>
   </section>
   <section>
     <h2>Nine ways to speak your offer into being</h2>
@@ -775,7 +775,7 @@ body.concepting .menu-btn, body.concepting .dock, body.concepting .toast { displ
 
   function parts(d) { var p = d.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
   // Paused until (and including) this date
-  var PAUSED = { badminton: "2026-10-22", gym: "2026-10-22", juice: "2026-10-22", plants_am: "2026-10-22" };
+  var PAUSED = { badminton: "2026-10-22", gym: "2026-10-22", juice: "2026-10-22", plants_am: "2026-10-22", plants_pm: "2026-10-21", read: "2026-10-21", nojunk: "2026-10-21", nosugar: "2026-10-21" };
   function isWeekend(d) { var w = parts(d).getDay(); return w === 0 || w === 6; }
   // Your own tasks: {id, name, time, from: "YYYY-MM-DD", only: bool}
   var CUSTOM = [];
