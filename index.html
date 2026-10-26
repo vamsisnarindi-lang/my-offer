@@ -476,7 +476,7 @@ body.concepting .menu-btn, body.concepting .dock, body.concepting .toast { displ
       <p class="lead">Nearly 1,000 questions across 14 topics, from basic to advanced, each with an explanation. Aim for 10 a day.</p>
     </div>
     <div class="qz-overview" id="qz-overview"></div>
-    <div class="btns" style="justify-content:flex-start"><button class="primary" id="qz-open" type="button">Start practising</button></div>
+    <div class="btns" style="justify-content:flex-start"><button class="primary" id="qz-open" type="button">Start practising</button><button class="ghost" id="pv-open" type="button" onclick="window.__openPdfs &amp;&amp; window.__openPdfs()">My PDFs</button></div>
   </section>
 <style>
 /* 30-day roadmap: a day picker by week, today's five tasks, then the daily rules. Uses the page's ember tokens. */
@@ -1471,7 +1471,8 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
     { name: "Splunk", desc: "Searches and dashboards", url: "", abbr: "Sp", color: "#C3A3F0" },
     { name: "AI", desc: "GenAI and agentic AI", url: "", abbr: "AI", color: "#FFD43B" },
     { name: "Interview questions", desc: "900+ questions with answers", url: "", abbr: "IQ", color: "#E9A06B", action: "quiz" },
-    { name: "Quick concepts", desc: "Cheat sheets and PDFs for 14 topics", url: "", abbr: "QC", color: "#8BD49C", action: "concepts" }
+    { name: "Quick concepts", desc: "Cheat sheets and PDFs for 14 topics", url: "", abbr: "QC", color: "#8BD49C", action: "concepts" },
+    { name: "My PDFs", desc: "Your own guides, saved on this phone", url: "", abbr: "PDF", color: "#FF9A5C", action: "pdfs" }
   ];
   var btn = document.getElementById("menuBtn"), dr = document.getElementById("drawer"), sc = document.getElementById("scrim"),
       list = document.getElementById("dnav"), note = document.getElementById("dnote");
@@ -1490,6 +1491,7 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
     a.appendChild(ico); a.appendChild(tx); a.appendChild(tag);
     if (t.action === "quiz") a.addEventListener("click", function () { setOpen(false); if (window.__openQuiz) window.__openQuiz(); });
     else if (t.action === "concepts") a.addEventListener("click", function () { setOpen(false); if (window.__openConcepts) window.__openConcepts(); });
+    else if (t.action === "pdfs") a.addEventListener("click", function () { setOpen(false); if (window.__openPdfs) window.__openPdfs(); });
     else if (!t.url) a.addEventListener("click", function () { note.textContent = "The " + t.name + " link hasn't been added yet. Send it to Claude and it will be connected here."; });
     li.appendChild(a); list.appendChild(li);
   });
@@ -2021,5 +2023,185 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
 })();
 </script>
 
+
+<style>
+/* My PDFs: guides kept only on this device (IndexedDB), read inside the app with pdf.js */
+.pv-drop { display: flex; flex-direction: column; gap: 10px; background: var(--card); border: 1px dashed var(--sand); border-radius: 14px; padding: 16px; }
+.pv-drop p { margin: 0; color: var(--dim); font-size: 0.92rem; }
+.pv-drop label.primary { align-self: flex-start; border-radius: 999px; padding: 10px 20px; font-weight: 600; cursor: pointer; }
+.pv-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.pv-drop input:focus-visible + label { outline: 3px solid var(--sand); outline-offset: 3px; }
+.pv-list { display: flex; flex-direction: column; gap: 10px; }
+.pv-item { display: flex; flex-direction: column; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.pv-item .nm { font-weight: 600; overflow-wrap: anywhere; }
+.pv-item .mt { font-size: 0.82rem; color: var(--dim); font-variant-numeric: tabular-nums; }
+.pv-item .ac { display: flex; flex-wrap: wrap; gap: 8px; }
+.pv-item .ac button { font-size: 0.88rem; padding: 8px 16px; }
+.pv-confirm { font-size: 0.88rem; color: var(--warn); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pv-empty { color: var(--dim); margin: 0; }
+.pv-bar { position: sticky; top: 0; z-index: 2; background: var(--night); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.pv-bar input { width: 4.5em; font: inherit; font-size: 16px; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; }
+.pv-bar .pg { color: var(--dim); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.pv-bar button { font-size: 0.85rem; padding: 7px 14px; }
+.pv-pages { display: flex; flex-direction: column; gap: 10px; }
+.pv-page { background: #fff; border-radius: 4px; width: 100%; position: relative; overflow: hidden; }
+.pv-page canvas { display: block; width: 100%; height: auto; }
+.pv-page .pn { position: absolute; right: 6px; bottom: 6px; background: rgba(11,8,6,0.75); color: var(--text); font-size: 0.72rem; padding: 2px 8px; border-radius: 99px; }
+.pv-status { color: var(--dim); font-size: 0.88rem; margin: 0; min-height: 1.2em; }
+body.pdfing { overflow: hidden; }
+body.pdfing .menu-btn, body.pdfing .dock, body.pdfing .toast { display: none !important; }
+</style>
+
+<div class="cc" id="pv" hidden role="dialog" aria-modal="true" aria-label="My PDFs">
+  <div class="cc-in">
+    <div class="qz-head">
+      <div><p class="qz-eyebrow">My PDFs</p><p class="qz-overall" id="pv-title">Your guides</p></div>
+      <button class="qz-x" id="pv-close" type="button" aria-label="Close My PDFs">✕</button>
+    </div>
+    <div id="pv-home">
+      <div class="pv-drop">
+        <p>Add a PDF from your phone. It is saved only on this phone, inside the app. Nothing is uploaded to the website.</p>
+        <input type="file" id="pv-file" accept="application/pdf,.pdf">
+        <label class="primary" for="pv-file">Add a PDF</label>
+        <p class="pv-status" id="pv-status"></p>
+      </div>
+      <div class="pv-list" id="pv-list" style="margin-top:14px"></div>
+    </div>
+    <div id="pv-read" hidden>
+      <div class="pv-bar">
+        <button class="ghost" id="pv-back" type="button">‹ My PDFs</button>
+        <label class="pg" for="pv-go">Page</label><input id="pv-go" type="number" inputmode="numeric" min="1" value="1">
+        <span class="pg" id="pv-of"></span>
+        <button class="ghost" id="pv-jump" type="button">Go</button>
+      </div>
+      <p class="pv-status" id="pv-rstatus"></p>
+      <div class="pv-pages" id="pv-pages"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var panel = $("pv"), DBN = "my-pdfs", ST = "files", dbp = null, LAST = "pdf-last-page";
+  function idb() {
+    if (dbp) return dbp;
+    dbp = new Promise(function (res, rej) {
+      try { var r = indexedDB.open(DBN, 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore(ST, { keyPath: "id" }); };
+        r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); };
+      } catch (e) { rej(e); }
+    });
+    return dbp;
+  }
+  function tx(mode, fn) { return idb().then(function (db) { return new Promise(function (res, rej) {
+    var t = db.transaction(ST, mode), s = t.objectStore(ST), out = fn(s);
+    t.oncomplete = function () { res(out && out.result !== undefined ? out.result : out); }; t.onerror = function () { rej(t.error); }; }); }); }
+  function all() { return tx("readonly", function (s) { return s.getAll(); }); }
+  function mb(n) { return (n / 1048576).toFixed(1) + " MB"; }
+  function lastPages() { try { return JSON.parse(localStorage.getItem(LAST) || "{}"); } catch (e) { return {}; } }
+  function setLast(id, p) { var o = lastPages(); o[id] = p; try { localStorage.setItem(LAST, JSON.stringify(o)); } catch (e) {} }
+
+  function list() {
+    $("pv-title").textContent = "Your guides"; $("pv-home").hidden = false; $("pv-read").hidden = true; stopRead();
+    var host = $("pv-list"); host.textContent = "";
+    all().then(function (items) {
+      host.textContent = "";
+      if (!items.length) { var p = document.createElement("p"); p.className = "pv-empty"; p.textContent = "No PDFs yet. Tap Add a PDF and choose your SQL Interview Guide."; host.appendChild(p); return; }
+      items.sort(function (a, b) { return b.added - a.added; }).forEach(function (it) {
+        var box = document.createElement("div"); box.className = "pv-item";
+        var nm = document.createElement("div"); nm.className = "nm"; nm.textContent = it.name;
+        var lp = lastPages()[it.id];
+        var mt = document.createElement("div"); mt.className = "mt"; mt.textContent = mb(it.size) + (lp ? " · last read page " + lp : "");
+        var ac = document.createElement("div"); ac.className = "ac";
+        var op = document.createElement("button"); op.type = "button"; op.className = "primary"; op.textContent = lp ? "Continue reading" : "Open";
+        op.addEventListener("click", function () { read(it, lp || 1); });
+        var rm = document.createElement("button"); rm.type = "button"; rm.className = "ghost"; rm.textContent = "Remove";
+        rm.addEventListener("click", function () {
+          if (box.querySelector(".pv-confirm")) return;
+          var c = document.createElement("div"); c.className = "pv-confirm"; c.appendChild(document.createTextNode("Remove this PDF from your phone?"));
+          var y = document.createElement("button"); y.type = "button"; y.className = "ghost"; y.textContent = "Yes, remove";
+          var n = document.createElement("button"); n.type = "button"; n.className = "ghost"; n.textContent = "Keep it";
+          y.addEventListener("click", function () { tx("readwrite", function (s) { s.delete(it.id); }).then(list); });
+          n.addEventListener("click", function () { c.remove(); });
+          c.appendChild(y); c.appendChild(n); box.appendChild(c);
+        });
+        ac.appendChild(op); ac.appendChild(rm);
+        box.appendChild(nm); box.appendChild(mt); box.appendChild(ac); host.appendChild(box);
+      });
+    }, function () { host.textContent = ""; var p = document.createElement("p"); p.className = "pv-empty"; p.textContent = "This browser is blocking app storage, so PDFs cannot be saved here. Open the app from your home screen icon and try again."; host.appendChild(p); });
+  }
+
+  $("pv-file").addEventListener("change", function (e) {
+    var f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return;
+    var st = $("pv-status");
+    if (!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)) { st.textContent = "That file is not a PDF. Choose a .pdf file."; return; }
+    st.textContent = "Saving " + f.name + "…";
+    f.arrayBuffer().then(function (buf) {
+      var item = { id: "p" + Date.now(), name: f.name.replace(/\.pdf$/i, ""), size: f.size, added: Date.now(), data: buf };
+      return tx("readwrite", function (s) { s.put(item); });
+    }).then(function () {
+      st.textContent = "Saved on this phone.";
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
+      list();
+    }, function () { st.textContent = "Could not save the PDF. Your phone may be low on space."; });
+  });
+
+  // ---- reader ----
+  var doc = null, obs = null, cur = null, ratio = 1.414;
+  function stopRead() { if (obs) { obs.disconnect(); obs = null; } if (doc) { doc.destroy(); doc = null; } $("pv-pages").textContent = ""; }
+  function read(it, start) {
+    if (!window.pdfjsLib) { $("pv-status").textContent = "The PDF reader needs the internet the first time. Connect and try again."; return; }
+    stopRead(); cur = it;
+    $("pv-home").hidden = true; $("pv-read").hidden = false; $("pv-title").textContent = it.name;
+    $("pv-rstatus").textContent = "Opening…";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    pdfjsLib.getDocument({ data: new Uint8Array(it.data.slice(0)) }).promise.then(function (d) {
+      doc = d; $("pv-rstatus").textContent = ""; $("pv-of").textContent = "of " + d.numPages; $("pv-go").max = d.numPages;
+      return d.getPage(1).then(function (p) { var v = p.getViewport({ scale: 1 }); ratio = v.height / v.width; build(d.numPages, start); });
+    }, function () { $("pv-rstatus").textContent = "This PDF could not be opened. It may be damaged or password protected."; });
+  }
+  function build(n, start) {
+    var host = $("pv-pages"); host.textContent = "";
+    obs = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { draw(e.target); } });
+      var vis = es.filter(function (e) { return e.isIntersecting; });
+      if (vis.length) { var pn = +vis[0].target.dataset.p; $("pv-go").value = pn; setLast(cur.id, pn); }
+    }, { root: panel, rootMargin: "800px 0px" });
+    for (var i = 1; i <= n; i++) {
+      var d = document.createElement("div"); d.className = "pv-page"; d.dataset.p = i; d.style.aspectRatio = (1 / ratio).toFixed(4);
+      var t = document.createElement("span"); t.className = "pn"; t.textContent = i; d.appendChild(t);
+      host.appendChild(d); obs.observe(d);
+    }
+    goTo(start);
+  }
+  function draw(box) {
+    if (box.dataset.done || !doc) return; box.dataset.done = "1";
+    var n = +box.dataset.p, d0 = doc;
+    d0.getPage(n).then(function (p) {
+      if (d0 !== doc) return;
+      var w = box.clientWidth || 360, dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var v = p.getViewport({ scale: (w * dpr) / p.getViewport({ scale: 1 }).width });
+      var c = document.createElement("canvas"); c.width = v.width; c.height = v.height;
+      box.insertBefore(c, box.firstChild); box.style.aspectRatio = "";
+      return p.render({ canvasContext: c.getContext("2d"), viewport: v }).promise;
+    }).catch(function () { box.dataset.done = ""; });
+  }
+  function goTo(n) {
+    var boxes = $("pv-pages").children; n = Math.max(1, Math.min(boxes.length, n | 0));
+    var b = boxes[n - 1]; if (b) panel.scrollTop = b.offsetTop - 60;
+  }
+  $("pv-jump").addEventListener("click", function () { goTo(+$("pv-go").value); });
+  $("pv-go").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); goTo(+$("pv-go").value); } });
+  $("pv-back").addEventListener("click", list);
+
+  function open() { panel.hidden = false; document.body.classList.add("pdfing"); list(); $("pv-close").focus(); }
+  function close() { stopRead(); panel.hidden = true; document.body.classList.remove("pdfing"); }
+  $("pv-close").addEventListener("click", close);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !panel.hidden) close(); });
+  window.__openPdfs = open;
+})();
+</script>
 </body>
 </html>
