@@ -478,6 +478,199 @@ body.concepting .menu-btn, body.concepting .dock, body.concepting .toast { displ
     <div class="qz-overview" id="qz-overview"></div>
     <div class="btns" style="justify-content:flex-start"><button class="primary" id="qz-open" type="button">Start practising</button></div>
   </section>
+<style>
+/* 30-day roadmap: a day picker by week, today's five tasks, then the daily rules. Uses the page's ember tokens. */
+.rmap { display: flex; flex-direction: column; gap: 18px; }
+.rmap .lead { margin: 0; }
+.rmap-rules { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.rmap-rules .fl { margin: 0; }
+.rmap-rules ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.rmap-rules li { padding-left: 16px; position: relative; min-width: 0; }
+.rmap-rules li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--glow); }
+.rmap-weeks { display: flex; flex-direction: column; gap: 8px; }
+.rmap-wk { display: flex; flex-direction: column; gap: 5px; }
+.rmap-wk .wl { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.rmap-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.rmap-d { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 6px 1px;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.rmap-d .dn { font-family: var(--display); font-weight: 700; font-size: 1.05rem; line-height: 1.15; }
+.rmap-d .dd { font-size: 0.68rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rmap-d.rest { background: var(--wkend); }
+.rmap-d.full { box-shadow: inset 0 0 0 2px var(--glow); }
+.rmap-d.today .dd { color: var(--glow); font-weight: 600; }
+.rmap-d[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.rmap-d[aria-pressed="true"] .dd { color: var(--accent-fg); }
+.rmap-d:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.rmap-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.rmap-card .eb { font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sand); font-weight: 600; margin: 0; }
+.rmap-card h3 { font-family: var(--display); font-weight: 800; font-size: clamp(1.35rem, 4.4vw, 1.7rem); line-height: 1.2; margin: 0; color: var(--glow); text-wrap: balance; }
+.rmap-tasks { display: flex; flex-direction: column; gap: 8px; }
+.rmap-row { display: flex; align-items: flex-start; gap: 12px; background: var(--night); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; cursor: pointer; min-width: 0; }
+.rmap-row input { flex: none; width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; }
+.rmap-row .tx { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rmap-row .k { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sand); font-weight: 600; }
+.rmap-row .v { overflow-wrap: anywhere; }
+.rmap-row.done { background: var(--done-bg); border-color: transparent; }
+.rmap-row.done .v { text-decoration: line-through; color: var(--muted); }
+.rmap-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.rmap-acts button { font-size: 0.88rem; padding: 8px 16px; }
+.rmap-meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 0.88rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+</style>
+
+<section class="rmap" id="roadmap">
+  <div>
+    <h2>30-day roadmap</h2>
+    <p class="lead">Mon 26 Oct to Tue 24 Nov, aimed at application and production support roles. Each day has one focus. Spend your study hours on today's focus first, then tick the five tasks.</p>
+  </div>
+
+  <div class="rmap-rules">
+    <p class="fl">Every day, no exceptions</p>
+    <ul>
+      <li>Phone in another room during every study hour.</li>
+      <li>No Instagram or YouTube before 7 PM, and 30 minutes at most after that.</li>
+      <li>Apply to 5 jobs, Monday to Saturday.</li>
+      <li>Answer at least 15 practice questions.</li>
+      <li>Sundays are for review and rest.</li>
+    </ul>
+  </div>
+
+  <div class="progress" aria-live="polite">
+    <div class="rmap-meta"><span id="rmapCount">0 of 30 days complete</span><span id="rmapApps">0 job applications ticked</span></div>
+    <div class="bar"><i id="rmapBar"></i></div>
+  </div>
+
+  <div class="rmap-weeks" id="rmapWeeks" role="group" aria-label="Choose a roadmap day"></div>
+
+  <article class="rmap-card" id="rmapCard">
+    <p class="eb" id="rmapEb">Day 1</p>
+    <h3 id="rmapTheme">SQL basics</h3>
+    <div class="rmap-tasks" id="rmapTasks"></div>
+    <div class="rmap-acts" id="rmapActs"></div>
+  </article>
+</section>
+
+<script>
+(function () {
+  var START = new Date(2026, 9, 26), DAYMS = 86400000;
+  var WEEKS = ["Week 1 · Foundations and a job-ready profile", "Week 2 · Core support tools", "Week 3 · Troubleshooting and DevOps basics", "Week 4 · Interview mode", "Final days · Polish and plan ahead"];
+  // [theme, concept sheet key, quiz key, learn, practise, do, job, talk]
+  var D = [
+    ["SQL basics", "sql", "sql", "SQL sheet: query order, filtering and NULL.", "15 SQL questions.", "Write 10 SELECT, WHERE and ORDER BY queries on a sample table (db-fiddle.com or sqliteonline.com).", "Update your Naukri and LinkedIn headline to Application / Production Support Engineer, 8 years. Apply to 5 jobs.", "Write your 60-second \"Tell me about yourself\"."],
+    ["SQL joins and grouping", "sql", "sql", "SQL sheet: joins and set operations.", "15 SQL questions.", "Write 10 queries using INNER JOIN, LEFT JOIN, GROUP BY and HAVING.", "Apply to 5 jobs.", "Say your intro aloud three times and record it once."],
+    ["Incident, problem and change management", "appsupport", "appsupport", "App support sheet: ITIL basics, P1 to P4, SLAs.", "15 app support questions.", "Write one real P1 incident from your last job as a STAR story (Situation, Task, Action, Result).", "Apply to 5 jobs.", "Explain incident vs problem vs change in one minute, out loud."],
+    ["Linux commands", "linux", "linux", "Linux sheet: files, processes, disk, permissions.", "15 Linux questions.", "Practise 20 commands in Git Bash or WSL: ls, cd, grep, tail -f, ps, top, df -h, chmod.", "Apply to 5 jobs.", "STAR story 2: a recurring issue you fixed for good."],
+    ["Reading logs on Linux", "linux", "linux", "Linux sheet: grep, awk, sort, uniq, find, cron.", "15 Linux questions.", "Make a sample app.log and count errors by type with grep and awk.", "Apply to 5 jobs and message 2 former colleagues for referrals.", "Answer aloud: \"How do you troubleshoot a slow application?\""],
+    ["Resume day", "appsupport", "appsupport", "Compare your resume with 3 job descriptions you like.", "10 app support questions.", "Add numbers to your resume: tickets per month, SLA %, resolution time, users supported.", "Apply to 5 jobs with the updated resume.", "STAR story 3: handling an upset user or stakeholder."],
+    ["Review and rest", "", "", "Skim this week's notes.", "Retry the questions you got wrong this week.", "Write two lines: what went well, what to fix next week.", "Check replies and recruiter messages only.", "Say all three STAR stories once."],
+
+    ["Advanced SQL", "sql", "sql", "SQL sheet: CTEs and window functions.", "15 SQL questions.", "Solve: 2nd highest salary, find duplicates, delete duplicates with ROW_NUMBER.", "Apply to 5 jobs.", "Explain DELETE vs TRUNCATE vs DROP."],
+    ["SQL for production fixes", "sql", "sql", "SQL sheet: indexes and performance.", "15 SQL questions.", "Write a safe data fix: back up rows, BEGIN, UPDATE with WHERE, check count, COMMIT or ROLLBACK.", "Apply to 5 jobs.", "Answer: \"What do you do if an UPDATE ran without a WHERE clause?\""],
+    ["APIs and HTTP", "apis", "apis", "APIs sheet: REST, status codes, tokens, timeouts.", "15 API questions.", "Call a public API in Postman and get a 200, a 404 and a 401.", "Apply to 5 jobs.", "Explain 401 vs 403 vs 500 vs 503."],
+    ["Monitoring basics", "monitoring", "monitoring", "Monitoring sheet: logs, metrics, alerts, dashboards.", "15 monitoring questions.", "List 5 alerts you would set for a web app, with the threshold and why.", "Apply to 5 jobs.", "Answer: \"How do you reduce alert noise?\""],
+    ["Splunk searches", "splunk", "splunk", "Splunk sheet: search, stats, table, timechart, top.", "15 Splunk questions.", "Start a Splunk free trial, upload a sample log and run 5 searches.", "Apply to 5 jobs and message 2 contacts for referrals.", "Explain one SPL query line by line."],
+    ["Splunk dashboards and alerts", "splunk", "splunk", "Splunk sheet: dashboards and alerts.", "15 Splunk questions.", "Build one dashboard with 3 panels: errors over time, top errors, slowest pages.", "Apply to 5 jobs.", "STAR story 4: an outage you helped resolve fast."],
+    ["Review and first mock interview", "", "", "Skim this week's notes.", "Retry this week's wrong answers.", "30-minute mock interview with a friend, or ask Claude to interview you.", "Check replies and recruiter messages only.", "Note the 3 questions that felt hardest."],
+
+    ["Troubleshooting framework", "problems", "problems", "Problem solving sheet.", "15 problem solving questions.", "Write your steps for \"users can't log in\": scope, recent changes, logs, isolate, fix, confirm.", "Apply to 5 jobs.", "Answer: \"The website is down. What do you do first?\""],
+    ["RCA and documentation", "appsupport", "appsupport", "App support sheet: RCA, 5 Whys, timelines.", "15 app support questions.", "Write a one-page RCA for an incident from your last job.", "Apply to 5 jobs.", "Present that RCA in two minutes."],
+    ["DevOps basics", "devops", "devops", "DevOps sheet: Git, CI/CD, deployments, rollback.", "15 DevOps questions.", "Create a GitHub repo and push your SQL queries and shell commands from these weeks.", "Apply to 5 jobs.", "Answer: \"How would you roll back a bad deployment?\""],
+    ["Containers and Kubernetes", "k8s", "k8s", "Kubernetes sheet: pods, logs, CrashLoopBackOff.", "15 Kubernetes questions.", "Write the kubectl commands you'd run when a pod keeps failing: get, describe, logs, events.", "Apply to 5 jobs.", "Explain container vs virtual machine."],
+    ["Cloud basics", "cloud", "cloud", "Cloud sheet: IaaS, PaaS, SaaS, regions, IAM.", "15 cloud questions.", "Make a one-page note of the cloud terms support interviews ask about.", "Apply to 5 jobs and message 2 contacts for referrals.", "Explain cloud to someone non-technical in one minute."],
+    ["APM tools", "dynatrace", "dynatrace", "Dynatrace or Datadog sheet, pick one.", "15 Dynatrace or Datadog questions.", "Write 5 lines comparing Splunk (logs) with an APM tool (traces and response times).", "Apply to 5 jobs.", "STAR story 5: a process you improved or automated."],
+    ["Review and technical mock", "", "", "Skim this week's notes.", "Retry this week's wrong answers.", "45-minute technical mock interview: SQL, Linux, troubleshooting.", "Check replies and recruiter messages only.", "Fix your answers to the 3 hardest questions."],
+
+    ["Python for support", "python", "python", "Python sheet: files, loops, exceptions.", "15 Python questions.", "Write a 10-line script that reads app.log and counts ERROR lines by type.", "Apply to 5 jobs.", "Explain your script out loud."],
+    ["SQL and Linux revision", "sql", "linux", "Re-read the SQL and Linux sheets.", "10 SQL and 10 Linux questions.", "Timed drill: 5 SQL queries in 20 minutes.", "Apply to 5 jobs.", "Rapid round: answer 10 questions in 10 minutes."],
+    ["Scenario day", "problems", "problems", "Problem solving sheet.", "15 problem solving questions.", "Write answers for 5 scenarios: disk full, DB connections exhausted, high CPU, expired certificate, slow page.", "Apply to 5 jobs.", "Record yourself answering two scenarios and play it back."],
+    ["Escalation and communication", "teamlead", "teamlead", "Team lead sheet: escalation, handover, on-call.", "15 team lead questions.", "Write a sample P1 status update email to stakeholders.", "Apply to 5 jobs.", "Practise a calm, honest answer to \"Why did you leave your last company?\""],
+    ["HR round", "appsupport", "appsupport", "List your strengths, one real weakness, and your notice period.", "10 app support questions.", "Research pay for 8-year support roles in your city and fix your expected number.", "Apply to 5 jobs and follow up on earlier applications.", "Say your HR answers aloud."],
+    ["Full mock interview", "", "", "Skim all your STAR stories.", "20 mixed questions across topics.", "60-minute mock interview: technical plus behavioural. Write down your weak areas.", "Apply to 5 jobs.", "Fix the two weakest answers."],
+    ["Review and rest", "", "", "Read your weak-areas list.", "Retry every wrong answer from this week.", "Rest, walk, and spend time with family.", "Check replies and recruiter messages only.", "Say your intro once."],
+
+    ["Fix weak areas", "", "", "Re-read the sheets for your weakest two topics.", "Retry all wrong answers from the month.", "Final resume polish.", "Apply to 5 jobs.", "Final run of your intro and five STAR stories."],
+    ["Review the month", "", "", "Count your applications, interviews and quiz score.", "15 questions on your weakest topic.", "Write the plan for your next 30 days.", "Apply to 5 jobs.", "Tell your family what you've achieved this month."]
+  ];
+  var KEYS = ["learn", "practise", "do", "job", "talk"], LBL = { learn: "Learn", practise: "Practise", do: "Do", job: "Job hunt", talk: "Speak" };
+  var DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function dateOf(i) { return new Date(START.getFullYear(), START.getMonth(), START.getDate() + i); }
+  function todayIdx() { var n = new Date(); n = new Date(n.getFullYear(), n.getMonth(), n.getDate()); return Math.round((n - START) / DAYMS); }
+  var TI = todayIdx(), sel = Math.min(29, Math.max(0, TI));
+  var LKEY = "roadmap-30", S = {}, db = null, saveT = null;
+  function clean(o) { var r = {}; o = (o && o.d) || {};
+    Object.keys(o).forEach(function (k) { if (/^\d{1,2}$/.test(k) && +k < 30 && Array.isArray(o[k])) r[k] = o[k].filter(function (x) { return KEYS.indexOf(x) >= 0; }); }); return r; }
+  try { S = clean(JSON.parse(localStorage.getItem(LKEY) || "{}")); } catch (e) {}
+  function persist() {
+    try { localStorage.setItem(LKEY, JSON.stringify({ d: S })); } catch (e) {}
+    if (!db) return; clearTimeout(saveT);
+    saveT = setTimeout(function () { db.doc("settings/roadmap").set({ d: S }).then(function () { saveT = null; }, function () { saveT = null; }); }, 800);
+  }
+  function done(i) { return (S[i] || []).length; }
+  var weeksEl = document.getElementById("rmapWeeks");
+  function buildDays() {
+    weeksEl.textContent = "";
+    for (var w = 0; w < 5; w++) {
+      var wk = document.createElement("div"); wk.className = "rmap-wk";
+      var wl = document.createElement("div"); wl.className = "wl"; wl.textContent = WEEKS[w]; wk.appendChild(wl);
+      var g = document.createElement("div"); g.className = "rmap-days";
+      for (var i = w * 7; i < Math.min(30, w * 7 + 7); i++) (function (i) {
+        var dt = dateOf(i), b = document.createElement("button"); b.type = "button";
+        b.className = "rmap-d" + (dt.getDay() === 0 ? " rest" : "") + (done(i) === 5 ? " full" : "") + (i === TI ? " today" : "");
+        b.setAttribute("aria-pressed", i === sel ? "true" : "false");
+        b.setAttribute("aria-label", "Day " + (i + 1) + ", " + DOW[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()] + ", " + done(i) + " of 5 done");
+        var dn = document.createElement("span"); dn.className = "dn"; dn.textContent = i + 1;
+        var dd = document.createElement("span"); dd.className = "dd"; dd.textContent = i === TI ? "Today" : DOW[dt.getDay()] + " " + dt.getDate();
+        b.appendChild(dn); b.appendChild(dd);
+        b.addEventListener("click", function () { sel = i; render(); });
+        g.appendChild(b);
+      })(i);
+      wk.appendChild(g); weeksEl.appendChild(wk);
+    }
+  }
+  function render() {
+    buildDays();
+    var r = D[sel], dt = dateOf(sel);
+    var when = sel === TI ? "Today" : (TI < 0 && sel === 0 ? "Starts tomorrow" : DOW[dt.getDay()] + " " + dt.getDate() + " " + MON[dt.getMonth()]);
+    document.getElementById("rmapEb").textContent = "Day " + (sel + 1) + " of 30 · " + when + " · " + done(sel) + " of 5 done";
+    document.getElementById("rmapTheme").textContent = r[0];
+    var host = document.getElementById("rmapTasks"); host.textContent = "";
+    KEYS.forEach(function (k, j) {
+      var id = "rmap-" + sel + "-" + k, on = (S[sel] || []).indexOf(k) >= 0;
+      var lab = document.createElement("label"); lab.className = "rmap-row" + (on ? " done" : ""); lab.setAttribute("for", id);
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.id = id; cb.checked = on;
+      var tx = document.createElement("span"); tx.className = "tx";
+      var kk = document.createElement("span"); kk.className = "k"; kk.textContent = LBL[k];
+      var v = document.createElement("span"); v.className = "v"; v.textContent = r[3 + j];
+      tx.appendChild(kk); tx.appendChild(v); lab.appendChild(cb); lab.appendChild(tx);
+      cb.addEventListener("change", function () {
+        var a = (S[sel] || []).filter(function (x) { return x !== k; }); if (cb.checked) a.push(k); S[sel] = a;
+        persist(); render();
+      });
+      host.appendChild(lab);
+    });
+    var acts = document.getElementById("rmapActs"); acts.textContent = "";
+    if (r[1]) { var c = document.createElement("button"); c.type = "button"; c.className = "ghost"; c.textContent = "Open today's sheet";
+      c.addEventListener("click", function () { if (window.__openConcepts) window.__openConcepts(r[1]); }); acts.appendChild(c); }
+    var q = document.createElement("button"); q.type = "button"; q.className = "primary"; q.textContent = r[2] ? "Practise now" : "Open practice";
+    q.addEventListener("click", function () { if (window.__openQuiz) window.__openQuiz(r[2] || undefined); }); acts.appendChild(q);
+    var full = 0, apps = 0; for (var i = 0; i < 30; i++) { if (done(i) === 5) full++; if ((S[i] || []).indexOf("job") >= 0 && D[i][6].indexOf("Apply to 5") >= 0) apps += 5; }
+    document.getElementById("rmapCount").textContent = full + " of 30 days complete";
+    document.getElementById("rmapApps").textContent = apps + " job applications ticked";
+    document.getElementById("rmapBar").style.width = (100 * full / 30) + "%";
+  }
+  render();
+  var use = window.claude && window.claude.use ? window.claude.use("db") : Promise.resolve(null);
+  use.then(function (ns) {
+    if (!ns) return; db = ns;
+    db.doc("settings/roadmap").onSnapshot(function (doc) {
+      if (!doc.exists) { if (Object.keys(S).length) db.doc("settings/roadmap").set({ d: S }).catch(function () {}); return; }
+      if (saveT) return;
+      S = clean(doc.data()); try { localStorage.setItem(LKEY, JSON.stringify({ d: S })); } catch (e) {}
+      render();
+    }, function () {});
+  }, function () {});
+})();
+</script>
+
   <section class="check-sec" id="checklist">
     <div>
       <h2>Today's checklist</h2>
@@ -1787,7 +1980,7 @@ document.querySelectorAll(".swap .flip").forEach(function (b) {
     body.appendChild(wrap);
     panel.scrollTop = 0;
   }
-  function open() { panel.hidden = false; document.body.classList.add("concepting"); list(); document.getElementById("cc-close").focus(); }
+  function open(k) { panel.hidden = false; document.body.classList.add("concepting"); var hit = k && C.filter(function (t) { return t.key === k; })[0]; if (hit) show(hit); else list(); document.getElementById("cc-close").focus(); }
   function close() { panel.hidden = true; document.body.classList.remove("concepting"); }
   document.getElementById("cc-close").addEventListener("click", close);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !panel.hidden) close(); });
